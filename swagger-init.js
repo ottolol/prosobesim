@@ -1,0 +1,3717 @@
+
+window.onload = function() {
+  // Build a system
+  let url = window.location.search.match(/url=([^&]+)/);
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    url = window.location.origin;
+  }
+  let options = {
+  "swaggerDoc": {
+    "openapi": "3.0.0",
+    "paths": {
+      "/api/v1/auth/sign-up": {
+        "post": {
+          "description": "Создаёт пользователя и отправляет письмо с подтверждением.",
+          "operationId": "AuthController_signUp",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignUpAuthDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Успешная регистрация",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SignUpSuccessSwagger"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Ошибка валидации или бизнес-ошибка (email/username заняты).",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BadRequestSignUpSwagger"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Регистрация нового пользователя.",
+          "tags": [
+            "Auth"
+          ]
+        }
+      },
+      "/api/v1/auth/confirm-email": {
+        "post": {
+          "description": "Проверяет код подтверждения и активирует аккаунт пользователя.",
+          "operationId": "AuthController_confirmEmail",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfirmEmailDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Email подтверждён.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ConfirmEmailSuccessSwagger"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Некорректный или просроченный код подтверждения, либо иные ошибки валидации.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BadRequestConfirmEmailSwagger"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Подтверждение адреса электронной почты.",
+          "tags": [
+            "Auth"
+          ]
+        }
+      },
+      "/api/v1/auth/resend-confirmation": {
+        "post": {
+          "description": "Отправляет новый код подтверждения, если пользователь найден и email ещё не подтверждён.",
+          "operationId": "AuthController_resendConfirmation",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResendConfirmationDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Письмо отправлено.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ResendConfirmationSuccessSwagger"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Email уже подтверждён или ошибка валидации.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BadRequestResendConfirmationSwagger"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Пользователь не найден.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/NotFoundResendConfirmationSwagger"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Повторная отправка письма с подтверждением.",
+          "tags": [
+            "Auth"
+          ]
+        }
+      },
+      "/api/v1/auth/sign-in": {
+        "post": {
+          "operationId": "AuthController_signIn",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignInAuthDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Успешно",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SingInViewDto"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Ошибка валидации. Возможные ошибки: неверный формат полей.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BadRequestSingIn"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Ошибка авторизации. Возможные ошибки: неверные учётные данные, неподтверждённый адрес электронной почты.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UnauthorizedSingIn"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Авторизация пользователя.",
+          "tags": [
+            "Auth"
+          ]
+        }
+      },
+      "/api/v1/auth/password-recovery": {
+        "post": {
+          "description": "Проверяет reCAPTCHA и отправляет письмо с кодом восстановления (при наличии пользователя).",
+          "operationId": "AuthController_requestPasswordRecovery",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordRecoveryRequestDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Запрос принят.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PasswordRecoverySuccessSwagger"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Ошибка валидации или не прошла проверка reCAPTCHA.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BadRequestPasswordRecoverySwagger"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Запрос на восстановление пароля.",
+          "tags": [
+            "Auth"
+          ]
+        }
+      },
+      "/api/v1/auth/password-recovery/verify": {
+        "get": {
+          "description": "Проверяет, существует ли recovery код и не истёк ли он. Используется для early validation на фронтенде.",
+          "operationId": "AuthController_verifyRecoveryCode",
+          "parameters": [
+            {
+              "name": "code",
+              "required": true,
+              "in": "query",
+              "description": "Код восстановления пароля из URL",
+              "schema": {
+                "example": "abc-123-def-456",
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Recovery код валиден",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "message": "Recovery code is valid"
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Recovery код невалиден или истёк",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "examples": {
+                      "invalid": {
+                        "summary": "Неверный код",
+                        "value": {
+                          "message": "Invalid recovery code",
+                          "errorsMessages": []
+                        }
+                      },
+                      "expired": {
+                        "summary": "Код истёк",
+                        "value": {
+                          "message": "Recovery code has expired",
+                          "errorsMessages": []
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Проверка валидности recovery кода",
+          "tags": [
+            "Auth"
+          ]
+        }
+      },
+      "/api/v1/auth/password-recovery/resend": {
+        "post": {
+          "description": "Принимает старый (истёкший) recovery код, генерирует новый код и отправляет свежую ссылку на email пользователя. reCAPTCHA не требуется, т.к. наличие валидного кода уже является защитой.",
+          "operationId": "AuthController_resendPasswordRecoveryLink",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResendPasswordRecoveryDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Новая ссылка успешно отправлена.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ResendPasswordRecoverySuccessSwagger"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Неверный recovery код.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BadRequestResendPasswordRecoverySwagger"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Переотправка ссылки для восстановления пароля",
+          "tags": [
+            "Auth"
+          ]
+        }
+      },
+      "/api/v1/auth/password-recovery-confirm": {
+        "post": {
+          "description": "Проверяет код восстановления и устанавливает новый пароль пользователя.",
+          "operationId": "AuthController_confirmPasswordRecovery",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordRecoveryConfirmDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Пароль успешно обновлён.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PasswordRecoveryConfirmSuccessSwagger"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Некорректный или просроченный код восстановления, либо ошибка валидации.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BadRequestPasswordRecoveryConfirmSwagger"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Подтверждение восстановления пароля.",
+          "tags": [
+            "Auth"
+          ]
+        }
+      },
+      "/api/v1/auth/refresh-token": {
+        "post": {
+          "description": "Требует валидный refreshToken",
+          "operationId": "AuthController_refreshToken",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "Успешно",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SingInViewDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Ошибка авторизации. Возможные ошибки: нет refresh token в cookie или он того.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UnauthorizedRefresh"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Обновить пару токенов.",
+          "tags": [
+            "Auth"
+          ]
+        }
+      },
+      "/api/v1/auth/sign-out": {
+        "post": {
+          "description": "Требует валидный refreshToken",
+          "operationId": "AuthController_signOut",
+          "parameters": [],
+          "responses": {
+            "204": {
+              "description": "Успешно"
+            },
+            "401": {
+              "description": "Ошибка авторизации. Возможные ошибки: нет refresh token в cookie или он того.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UnauthorizedSignOutSwagger"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Выход из системы",
+          "tags": [
+            "Auth"
+          ]
+        }
+      },
+      "/api/v1/auth/me": {
+        "get": {
+          "operationId": "AuthController_getMe",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "Успешно",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetMeViewDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Не авторизован.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UnauthorizedGetMe"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Получение информации пользователе.",
+          "tags": [
+            "Auth"
+          ]
+        }
+      },
+      "/api/v1/auth/oauth/{provider}": {
+        "get": {
+          "description": "</br>После успешной авторизации вас перенаправит на <b>http://domain.com/auth/oauth/provider?access_token=somestring</b></br></br> <b>AccessToken</b> в query, <b>refreshToken</b> в cookie </br></br> Запросы для yandex принимаются с <b>[\"https://traineegramm.ru\",\"http://localhost:3000\"]</b></br> Запросы для github принимаются с <b>[\"http://localhost:3000\"]</b>",
+          "operationId": "AuthController_connect",
+          "parameters": [
+            {
+              "name": "provider",
+              "required": true,
+              "in": "path",
+              "description": "Доступные провайдеры: yandex, github",
+              "schema": {
+                "enum": [
+                  "yandex",
+                  "github"
+                ],
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Успешно",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/oAuthOkResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Ошибка авторизации.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UnauthorizedoAuthSwagger"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Авторизироваться через сторонние сервисы.",
+          "tags": [
+            "oAuth"
+          ]
+        }
+      },
+      "/api/v1/sessions": {
+        "get": {
+          "operationId": "DeviceController_getAllSessions",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "Успешно.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/DeviceOkResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Ошибка авторизации.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UnauthorizedRefresh"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Получить все сеансы для аутентифицированного пользователя.",
+          "tags": [
+            "Device"
+          ]
+        }
+      },
+      "/api/v1/sessions/terminate-all": {
+        "delete": {
+          "operationId": "DeviceController_terminateAllOtherSessions",
+          "parameters": [],
+          "responses": {
+            "204": {
+              "description": "Успешно"
+            },
+            "401": {
+              "description": "Ошибка авторизации.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UnauthorizedTerminateAllSwagger"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Удаление всех сессий, кроме текущей.",
+          "tags": [
+            "Device"
+          ]
+        }
+      },
+      "/api/v1/sessions/{deviceId}": {
+        "delete": {
+          "operationId": "DeviceController_deleteDevice",
+          "parameters": [],
+          "responses": {
+            "204": {
+              "description": "Успешно."
+            },
+            "400": {
+              "description": "Ошибка валидации.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BadRequest"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Ошибка авторизации.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Unauthorized"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Нет прав на удаление девайса.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Forbidden"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Device not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/NotFound"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Удалить сессию.",
+          "tags": [
+            "Device"
+          ]
+        }
+      },
+      "/api/v1/profile/{userId}": {
+        "get": {
+          "description": "Возвращает профиль со счётчиками (followers, following, posts). При авторизации — isFollowed.",
+          "operationId": "ProfileController_getProfile",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "Профиль найден",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProfileViewDto"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Получить публичный профиль по userId",
+          "tags": [
+            "Profiles"
+          ]
+        }
+      },
+      "/api/v1/profile/upload-avatar": {
+        "post": {
+          "description": "Загружает аватар текущего пользователя, сохраняет его в файловом сервисе и возвращает данные по размерам аватара.",
+          "operationId": "ProfileController_uploadAvatar",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "description": "Форма с файлом аватара. Поле avatar — бинарный файл изображения.",
+            "content": {
+              "multipart/form-data": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "avatar": {
+                      "type": "string",
+                      "format": "binary",
+                      "description": "Файл изображения (JPEG) для аватара не более 1mb."
+                    }
+                  },
+                  "required": [
+                    "avatar"
+                  ]
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Аватар успешно загружен. Возвращает массив, 192х192 и 45х45",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/AvatarVariantSwagger"
+                    },
+                    "example": [
+                      {
+                        "userId": "user-uuid",
+                        "url": "https://storage.yandexcloud.net/bucket/avatars/user-uuid/avatar-192x192.jpg",
+                        "width": 192,
+                        "height": 192
+                      },
+                      {
+                        "userId": "user-uuid",
+                        "url": "https://storage.yandexcloud.net/bucket/avatars/user-uuid/avatar-45x45.jpg",
+                        "width": 45,
+                        "height": 45
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Ошибка валидации файла или бизнес-ошибка при сохранении аватара.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BadRequestUploadAvatarSwagger"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Пользователь не авторизован.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UnauthorizedUploadAvatarSwagger"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Загрузка аватара пользователя.",
+          "tags": [
+            "Profiles"
+          ]
+        }
+      },
+      "/api/v1/profile/avatar": {
+        "delete": {
+          "description": "Удаляет аватар текущего пользователя из файлового сервиса.",
+          "operationId": "ProfileController_deleteAvatar",
+          "parameters": [],
+          "responses": {
+            "204": {
+              "description": "Аватар успешно удалён."
+            },
+            "401": {
+              "description": "Пользователь не авторизован.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UnauthorizedDeleteAvatarSwagger"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Удаление аватара пользователя.",
+          "tags": [
+            "Profiles"
+          ]
+        }
+      },
+      "/api/v1/profile": {
+        "patch": {
+          "description": "Обновляет профиль пользователя. Все поля опциональны - можно обновить только нужные поля (частичное обновление).",
+          "operationId": "ProfileController_updateProfile",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "description": "Данные для обновления профиля. Все поля опциональны.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateProfileDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Профиль обновлён",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProfileViewDto"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Обновить профиль текущего пользователя",
+          "tags": [
+            "Profiles"
+          ]
+        }
+      },
+      "/api/v1/users/search": {
+        "get": {
+          "description": "Поиск пользователей по username (частичное совпадение). Cursor-based пагинация для infinite scroll.",
+          "operationId": "UsersSearchController_searchUsers",
+          "parameters": [
+            {
+              "name": "username",
+              "required": false,
+              "in": "query",
+              "description": "Поиск по username (частичное совпадение, без учёта регистра)",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "pageSize",
+              "required": false,
+              "in": "query",
+              "description": "Количество результатов (по умолчанию 10, макс 50)",
+              "schema": {
+                "type": "number"
+              }
+            },
+            {
+              "name": "cursor",
+              "required": false,
+              "in": "query",
+              "description": "ID последнего пользователя из предыдущей страницы",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Результаты поиска",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SearchUsersResultViewDto"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Поиск пользователей",
+          "tags": [
+            "Users"
+          ]
+        }
+      },
+      "/api/v1/users/{userId}/follow": {
+        "post": {
+          "description": "Подписка на пользователя для отслеживания его публикаций.",
+          "operationId": "UsersSearchController_followUser",
+          "parameters": [
+            {
+              "name": "userId",
+              "required": true,
+              "in": "path",
+              "description": "ID пользователя, на которого подписываемся",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "204": {
+              "description": "Подписка выполнена"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Подписаться на пользователя",
+          "tags": [
+            "Users"
+          ]
+        },
+        "delete": {
+          "description": "Удаление подписки на пользователя.",
+          "operationId": "UsersSearchController_unfollowUser",
+          "parameters": [
+            {
+              "name": "userId",
+              "required": true,
+              "in": "path",
+              "description": "ID пользователя, от которого отписываемся",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "204": {
+              "description": "Отписка выполнена"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Отписаться от пользователя",
+          "tags": [
+            "Users"
+          ]
+        }
+      },
+      "/api/v1/posts": {
+        "post": {
+          "description": "Создаёт новый пост для текущего пользователя и сохраняет привязку фотографий.",
+          "operationId": "PostsController_create",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "description": "Данные для создания поста",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePostRequestSwagger"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Пост создан",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PostViewSwagger"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Неверные данные запроса или ошибка валидации.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BadRequestPostSwagger"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Пользователь не авторизован.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UnauthorizedPostSwagger"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Создание поста",
+          "tags": [
+            "Posts"
+          ]
+        },
+        "get": {
+          "description": "Возвращает все посты. Можно указать `authorId`, чтобы получить посты определённого пользователя.",
+          "operationId": "PostsController_findAll",
+          "parameters": [
+            {
+              "name": "authorId",
+              "required": false,
+              "in": "query",
+              "description": "Идентификатор автора. Если указан — возвращаются только его посты.",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Список постов",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/PostViewSwagger"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Получение списка постов",
+          "tags": [
+            "Posts"
+          ]
+        }
+      },
+      "/api/v1/posts/feed": {
+        "get": {
+          "description": "Возвращает публикации пользователей, на которых подписан текущий пользователь. Сортировка от новых к старым. Cursor-пагинация для infinite scroll.",
+          "operationId": "PostsController_getFeed",
+          "parameters": [
+            {
+              "name": "cursor",
+              "required": false,
+              "in": "query",
+              "description": "ID последнего поста для пагинации",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "pageSize",
+              "required": false,
+              "in": "query",
+              "description": "Количество постов (по умолчанию 10, макс 50)",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Лента постов",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/PostViewDto"
+                        }
+                      },
+                      "nextCursor": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "hasMore": {
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Требуется авторизация"
+            }
+          },
+          "summary": "Лента публикаций подписок (Feed)",
+          "tags": [
+            "Posts"
+          ]
+        }
+      },
+      "/api/v1/posts/{postId}/comments": {
+        "get": {
+          "description": "Возвращает комментарии к публикации с пагинацией по курсору.",
+          "operationId": "PostsController_getComments",
+          "parameters": [
+            {
+              "name": "postId",
+              "required": true,
+              "in": "path",
+              "description": "Идентификатор поста",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "cursor",
+              "required": false,
+              "in": "query",
+              "description": "Курсор для пагинации",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "limit",
+              "required": false,
+              "in": "query",
+              "description": "Количество комментариев (по умолчанию 10)",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Список комментариев",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/CommentsListSwagger"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Пост не найден.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/NotFoundPostSwagger"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Получение списка комментариев поста",
+          "tags": [
+            "Posts"
+          ]
+        },
+        "post": {
+          "description": "Создаёт новый комментарий к публикации. Допустимая длина: от 1 до 300 символов.",
+          "operationId": "PostsController_createComment",
+          "parameters": [
+            {
+              "name": "postId",
+              "required": true,
+              "in": "path",
+              "description": "Идентификатор поста",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "description": "Текст комментария",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCommentRequestSwagger"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Комментарий создан",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/CommentViewSwagger"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Неверные данные запроса или ошибка валидации.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BadRequestPostSwagger"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Пользователь не авторизован.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UnauthorizedPostSwagger"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Пост не найден.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/NotFoundPostSwagger"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Создание комментария к посту",
+          "tags": [
+            "Posts"
+          ]
+        }
+      },
+      "/api/v1/posts/{id}": {
+        "get": {
+          "operationId": "PostsController_findOne",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "description": "Идентификатор поста",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Пост найден",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PostViewSwagger"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Пост не найден",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/NotFoundPostSwagger"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Получение поста по идентификатору",
+          "tags": [
+            "Posts"
+          ]
+        },
+        "patch": {
+          "description": "Доступно только владельцу поста.",
+          "operationId": "PostsController_update",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "description": "Идентификатор поста",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdatePostInputDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "204": {
+              "description": "Пост обновлён"
+            },
+            "401": {
+              "description": "Пользователь не авторизован.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UnauthorizedPostSwagger"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Пользователь не является владельцем поста.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ForbiddenPostSwagger"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Пост не найден.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/NotFoundPostSwagger"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Обновление поста",
+          "tags": [
+            "Posts"
+          ]
+        },
+        "delete": {
+          "description": "Помечает пост как удалённый. Доступно только владельцу.",
+          "operationId": "PostsController_remove",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "description": "Идентификатор поста",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "204": {
+              "description": "Пост помечен как удалённый"
+            },
+            "401": {
+              "description": "Пользователь не авторизован.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UnauthorizedPostSwagger"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Пользователь не является владельцем поста.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ForbiddenPostSwagger"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Пост не найден.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/NotFoundPostSwagger"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Удаление поста",
+          "tags": [
+            "Posts"
+          ]
+        }
+      },
+      "/api/v1/posts/user/{userId}": {
+        "get": {
+          "operationId": "PostsController_getUserPosts",
+          "parameters": [
+            {
+              "name": "userId",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "cursor",
+              "required": false,
+              "in": "query",
+              "description": "id последнего поста, если не передан будет возращена первая часть",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "pageSize",
+              "required": false,
+              "in": "query",
+              "description": "по умолчанию 8",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "sortDirection",
+              "required": false,
+              "in": "query",
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "asc",
+                  "desc"
+                ],
+                "default": "desc"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/PaginatedViewDto"
+                      },
+                      {
+                        "properties": {
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/PostViewDto"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Ошибка валидации. Возможные ошибки: неверный формат полей.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetPostsByUserIdBadRequest"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Получение постов по userId. Используется cursor пагинация.",
+          "tags": [
+            "Posts"
+          ]
+        }
+      },
+      "/api/v1/posts/public/stats": {
+        "get": {
+          "description": "Возвращает количество пользователей и свежие посты для публичной страницы.",
+          "operationId": "PostsController_publicStats",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "Статистика собрана",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PublicStatsSwagger"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Публичная статистика",
+          "tags": [
+            "Posts"
+          ]
+        }
+      },
+      "/api/v1/subscriptions/plans": {
+        "get": {
+          "operationId": "SubscriptionsPaymentsController_getAvailablePlans",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "List of available subscription plans",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/SubscriptionPaymentsPlanViewDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Get available subscription plans",
+          "tags": [
+            "Subscriptions"
+          ]
+        }
+      },
+      "/api/v1/subscriptions/create": {
+        "post": {
+          "operationId": "SubscriptionsPaymentsController_createSubscription",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSubscriptionDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Subscription created, payment order ready",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "subscriptionId": {
+                        "type": "string"
+                      },
+                      "orderId": {
+                        "type": "string"
+                      },
+                      "approvalUrl": {
+                        "type": "string"
+                      },
+                      "paymentId": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Create subscription and payment order",
+          "tags": [
+            "Subscriptions"
+          ]
+        }
+      },
+      "/api/v1/subscriptions/capture/{orderId}": {
+        "post": {
+          "operationId": "SubscriptionsPaymentsController_captureSubscriptionPayment",
+          "parameters": [
+            {
+              "name": "orderId",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Payment captured successfully"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Capture subscription payment after user approval",
+          "tags": [
+            "Subscriptions"
+          ]
+        }
+      },
+      "/api/v1/subscriptions/{subscriptionId}/auto-renewal": {
+        "patch": {
+          "operationId": "SubscriptionsPaymentsController_toggleAutoRenewal",
+          "parameters": [
+            {
+              "name": "subscriptionId",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToggleAutoRenewalDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Auto-renewal toggled successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ToggleAutoRenewalDto"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Auto-renewal can only be enabled for active subscriptions"
+            },
+            "404": {
+              "description": "Subscription not found"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Toggle auto-renewal for subscription",
+          "tags": [
+            "Subscriptions"
+          ]
+        }
+      },
+      "/api/v1/subscriptions/current": {
+        "get": {
+          "operationId": "SubscriptionsPaymentsController_getCurrentSubscription",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "Current active subscription",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SubscriptionPaymentViewDto"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "No active subscription found"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Get current active subscription",
+          "tags": [
+            "Subscriptions"
+          ]
+        }
+      },
+      "/api/v1/subscriptions": {
+        "get": {
+          "operationId": "SubscriptionsPaymentsController_getUserSubscriptions",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "Subscriptions retrieved"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Get all user subscriptions",
+          "tags": [
+            "Subscriptions"
+          ]
+        }
+      },
+      "/api/v1/subscriptions/my-payments": {
+        "get": {
+          "operationId": "SubscriptionsPaymentsController_getPaymentHistory",
+          "parameters": [
+            {
+              "name": "page",
+              "required": false,
+              "in": "query",
+              "description": "Page number",
+              "schema": {
+                "default": 1,
+                "example": 1,
+                "type": "number"
+              }
+            },
+            {
+              "name": "pageSize",
+              "required": false,
+              "in": "query",
+              "description": "Number of items per page",
+              "schema": {
+                "default": 10,
+                "example": 10,
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Payment history retrieved",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PaymentHistoryViewDto"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Get payment history with pagination",
+          "tags": [
+            "Subscriptions"
+          ]
+        }
+      },
+      "/api/v1/payments/create-order": {
+        "post": {
+          "operationId": "PaymentsController_createPaymentOrder",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateOrderDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Order created successfully"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Create PayPal payment order",
+          "tags": [
+            "Payments"
+          ]
+        }
+      },
+      "/api/v1/payments/capture/{orderId}": {
+        "post": {
+          "operationId": "PaymentsController_capturePayment",
+          "parameters": [
+            {
+              "name": "orderId",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Payment captured successfully"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Capture PayPal payment after user approval",
+          "tags": [
+            "Payments"
+          ]
+        }
+      },
+      "/api/v1/payments/history": {
+        "get": {
+          "operationId": "PaymentsController_getPaymentHistory",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "Payment history retrieved"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Get user payment history",
+          "tags": [
+            "Payments"
+          ]
+        }
+      },
+      "/api/v1/payments/refund/{paymentId}": {
+        "post": {
+          "operationId": "PaymentsController_refundPayment",
+          "parameters": [
+            {
+              "name": "paymentId",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Refund processed successfully"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Refund a payment",
+          "tags": [
+            "Payments"
+          ]
+        }
+      },
+      "/api/v1/notifications": {
+        "get": {
+          "operationId": "NotificationsController_getNotifications",
+          "parameters": [
+            {
+              "name": "cursor",
+              "required": false,
+              "in": "query",
+              "description": "id последнего уведомления, если не передан будет возвращена первая часть",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "pageSize",
+              "required": false,
+              "in": "query",
+              "description": "Количество уведомлений на странице. По умолчанию 8.",
+              "schema": {
+                "type": "number"
+              }
+            },
+            {
+              "name": "sortDirection",
+              "required": false,
+              "in": "query",
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "asc",
+                  "desc"
+                ],
+                "default": "desc"
+              }
+            },
+            {
+              "name": "sortBy",
+              "required": false,
+              "in": "query",
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "createdAt"
+                ],
+                "default": "createdAt"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/PaginatedViewDto"
+                      },
+                      {
+                        "properties": {
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/NotifyResponseDto"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Ошибка валидации. Возможные ошибки: неверный формат полей.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GetNotificationsBadRequest"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Пользователь не авторизован."
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Получение уведомлений текущего пользователя за последний месяц. Cursor пагинация.",
+          "tags": [
+            "Notifications"
+          ]
+        },
+        "put": {
+          "operationId": "NotificationsController_markAsRead",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ids"
+                  ],
+                  "properties": {
+                    "ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "clxyz1",
+                        "clxyz2"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "204": {
+              "description": "Уведомления помечены как прочитанные."
+            },
+            "400": {
+              "description": "Ошибка валидации. Возможные ошибки: ids должен быть массивом строк.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/MarkAsReadBadRequest"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Пользователь не авторизован."
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "Пометить уведомления как прочитанные.",
+          "tags": [
+            "Notifications"
+          ]
+        }
+      }
+    },
+    "info": {
+      "title": "Inctagram API",
+      "description": "## WebSocket API\n\nДля взаимодествий с websocket используйте **Socket.IO**.\n\n **Notifications WebSocket URL**: `https://gateway.traineegramm.ru/notifications`\n\n### Аутентификация\n\nДля авторизации используется **query параметр**:\n\n```\ntoken: string\n```\n\nТокен передается при установлении соединения.\n\n---\n\n## &#x20;\n\n### Notification WebSocket Events\n\n Клиенты должны подписаться на событие   `notifications`  чтобы получать уведомления в реальном времени.\n\n  \n\n⚠️ **Событие обязательно должно быть подтверждено (ack).**\n\nПример объекта уведомления:\n\n```json\n{\n  \"id\": \"ce1f57d2-9d42-4652-9f47-7bab27d4e699\",\n  \"message\": \"Subscription activated successfully.\",\n  \"isReady\": false,\n  \"createdAt\": \"2026-03-04T11:59:13.684Z\"\n}\n```\n",
+      "version": "1.0",
+      "contact": {}
+    },
+    "tags": [],
+    "servers": [],
+    "components": {
+      "securitySchemes": {
+        "bearer": {
+          "scheme": "bearer",
+          "bearerFormat": "JWT",
+          "type": "http"
+        }
+      },
+      "schemas": {
+        "SignUpAuthDto": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "example": "john_doe",
+              "description": "Имя пользователя (3-30 символов, только буквы, цифры, _ и -)"
+            },
+            "email": {
+              "type": "string",
+              "example": "john@example.com",
+              "description": "Email адрес"
+            },
+            "password": {
+              "type": "string",
+              "example": "SecurePass123!",
+              "description": "Пароль (6-20 символов, должен содержать заглавные и строчные буквы, цифры и спецсимволы)"
+            }
+          },
+          "required": [
+            "username",
+            "email",
+            "password"
+          ]
+        },
+        "SignUpSuccessSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Registration successful. Please check your email to confirm your account."
+            },
+            "userId": {
+              "type": "string",
+              "example": "clz9x5f0f0000y7p2k123abc"
+            }
+          },
+          "required": [
+            "message",
+            "userId"
+          ]
+        },
+        "BadRequestSignUpSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "User with this email already exists"
+            },
+            "errorsMessages": {
+              "example": [
+                {
+                  "field": "email",
+                  "message": "email must be an email"
+                }
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "ConfirmEmailDto": {
+          "type": "object",
+          "properties": {
+            "confirmationCode": {
+              "type": "string",
+              "example": "abc123-def456-ghi789",
+              "description": "Код подтверждения email из письма"
+            }
+          },
+          "required": [
+            "confirmationCode"
+          ]
+        },
+        "ConfirmEmailSuccessSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Email confirmed successfully"
+            }
+          },
+          "required": [
+            "message"
+          ]
+        },
+        "BadRequestConfirmEmailSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Invalid confirmation code"
+            },
+            "errorsMessages": {
+              "example": [
+                {
+                  "field": "code",
+                  "message": "Confirmation code has expired"
+                }
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "ResendConfirmationDto": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string",
+              "example": "john@example.com",
+              "description": "Email адрес для повторной отправки письма"
+            }
+          },
+          "required": [
+            "email"
+          ]
+        },
+        "ResendConfirmationSuccessSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Confirmation email sent"
+            }
+          },
+          "required": [
+            "message"
+          ]
+        },
+        "BadRequestResendConfirmationSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Email is already confirmed"
+            },
+            "errorsMessages": {
+              "example": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "NotFoundResendConfirmationSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "User not found"
+            },
+            "errorsMessages": {
+              "example": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "SignInAuthDto": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "email",
+            "password"
+          ]
+        },
+        "SingInViewDto": {
+          "type": "object",
+          "properties": {
+            "accessToken": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "accessToken"
+          ]
+        },
+        "BadRequestSingIn": {
+          "type": "object",
+          "properties": {
+            "errorsMessages": {
+              "example": [
+                {
+                  "field": "email",
+                  "message": "email must be a string; Received value: undefined"
+                }
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "errorsMessages"
+          ]
+        },
+        "UnauthorizedSingIn": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Не верный логин или пароль."
+            },
+            "errorsMessages": {
+              "example": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "PasswordRecoveryRequestDto": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string",
+              "example": "john@example.com",
+              "description": "Email адрес для восстановления пароля"
+            },
+            "recaptchaToken": {
+              "type": "string",
+              "example": "recaptcha-token-here",
+              "description": "Токен reCAPTCHA для защиты от ботов"
+            }
+          },
+          "required": [
+            "email",
+            "recaptchaToken"
+          ]
+        },
+        "PasswordRecoverySuccessSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "If the email exists, a recovery link has been sent"
+            }
+          },
+          "required": [
+            "message"
+          ]
+        },
+        "BadRequestPasswordRecoverySwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Recaptcha verification failed"
+            },
+            "errorsMessages": {
+              "example": [
+                {
+                  "field": "email",
+                  "message": "email must be an email"
+                }
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "ResendPasswordRecoveryDto": {
+          "type": "object",
+          "properties": {
+            "oldRecoveryCode": {
+              "type": "string",
+              "example": "abc-123-def-456",
+              "description": "Старый (истёкший) recovery код из URL"
+            }
+          },
+          "required": [
+            "oldRecoveryCode"
+          ]
+        },
+        "ResendPasswordRecoverySuccessSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "A new recovery link has been sent to your email"
+            },
+            "email": {
+              "type": "string",
+              "example": "john@example.com",
+              "description": "Email пользователя (для отображения в UI)"
+            }
+          },
+          "required": [
+            "message",
+            "email"
+          ]
+        },
+        "BadRequestResendPasswordRecoverySwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Invalid recovery code",
+              "description": "Recovery код не найден или уже был использован"
+            },
+            "errorsMessages": {
+              "example": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "PasswordRecoveryConfirmDto": {
+          "type": "object",
+          "properties": {
+            "recoveryCode": {
+              "type": "string",
+              "example": "recovery-code-123",
+              "description": "Код восстановления пароля из письма"
+            },
+            "newPassword": {
+              "type": "string",
+              "example": "NewSecurePass123!",
+              "description": "Новый пароль (6-20 символов, должен содержать заглавные и строчные буквы, цифры и спецсимволы)"
+            }
+          },
+          "required": [
+            "recoveryCode",
+            "newPassword"
+          ]
+        },
+        "PasswordRecoveryConfirmSuccessSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Password updated successfully"
+            }
+          },
+          "required": [
+            "message"
+          ]
+        },
+        "BadRequestPasswordRecoveryConfirmSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Invalid recovery code"
+            },
+            "errorsMessages": {
+              "example": [
+                {
+                  "field": "password",
+                  "message": "Password must contain at least one uppercase letter..."
+                }
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "UnauthorizedRefresh": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Unauthorized."
+            },
+            "errorsMessages": {
+              "example": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "UnauthorizedSignOutSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Unauthorized."
+            },
+            "errorsMessages": {
+              "example": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "GetMeViewDto": {
+          "type": "object",
+          "properties": {
+            "userId": {
+              "type": "string",
+              "example": "asdasd2334sad11"
+            },
+            "userName": {
+              "type": "string",
+              "example": "EtoSuperNickName"
+            },
+            "email": {
+              "type": "string",
+              "example": "a@a.com"
+            }
+          },
+          "required": [
+            "userId",
+            "userName",
+            "email"
+          ]
+        },
+        "UnauthorizedGetMe": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Не верный логин или пароль."
+            },
+            "errorsMessages": {
+              "example": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "oAuthOkResponse": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "url"
+          ]
+        },
+        "UnauthorizedoAuthSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Unauthorized."
+            },
+            "errorsMessages": {
+              "example": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "DeviceViewDto": {
+          "type": "object",
+          "properties": {
+            "deviceId": {
+              "type": "string",
+              "example": "58ac7d86-e64c-4856-8518-a7fee5621fa8"
+            },
+            "deviceType": {
+              "type": "string",
+              "example": "mobile"
+            },
+            "deviceName": {
+              "type": "string",
+              "example": "SM-G955U"
+            },
+            "browserName": {
+              "type": "string",
+              "example": "Mobile Chrome"
+            },
+            "lastActive": {
+              "type": "string",
+              "example": "2025-10-25T18:14:00.624Z"
+            }
+          },
+          "required": [
+            "deviceId",
+            "deviceType",
+            "deviceName",
+            "browserName",
+            "lastActive"
+          ]
+        },
+        "DeviceOkResponse": {
+          "type": "object",
+          "properties": {
+            "current": {
+              "description": "Успешно.",
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/DeviceViewDto"
+                }
+              ]
+            },
+            "others": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/DeviceViewDto"
+              }
+            }
+          },
+          "required": [
+            "current",
+            "others"
+          ]
+        },
+        "UnauthorizedTerminateAllSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Unauthorized."
+            },
+            "errorsMessages": {
+              "example": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "BadRequest": {
+          "type": "object",
+          "properties": {
+            "errorsMessages": {
+              "example": [
+                {
+                  "field": "deviceId",
+                  "message": "deviceId must be a UUID; Received value: undefined"
+                }
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "errorsMessages"
+          ]
+        },
+        "Unauthorized": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Unauthorized."
+            },
+            "errorsMessages": {
+              "example": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "Forbidden": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Forbidden."
+            },
+            "errorsMessages": {
+              "example": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "NotFound": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "NotFound."
+            },
+            "errorsMessages": {
+              "example": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "ProfileViewDto": {
+          "type": "object",
+          "properties": {
+            "userId": {
+              "type": "string",
+              "example": "user-uuid"
+            },
+            "username": {
+              "type": "string",
+              "example": "username123"
+            },
+            "firstName": {
+              "type": "string",
+              "example": "John"
+            },
+            "lastName": {
+              "type": "string",
+              "example": "Doe"
+            },
+            "dateOfBirth": {
+              "type": "object",
+              "example": "1990-01-01T00:00:00.000Z",
+              "nullable": true
+            },
+            "country": {
+              "type": "object",
+              "example": "Russia",
+              "nullable": true
+            },
+            "city": {
+              "type": "object",
+              "example": "Moscow",
+              "nullable": true
+            },
+            "aboutMe": {
+              "type": "object",
+              "example": "About me text",
+              "nullable": true
+            },
+            "avatar": {
+              "example": [
+                {
+                  "userId": "user-uuid",
+                  "url": "https://storage.yandexcloud.net/bucket/avatars/user-uuid/avatar-192x192.jpg",
+                  "width": 192,
+                  "height": 192
+                },
+                {
+                  "userId": "user-uuid",
+                  "url": "https://storage.yandexcloud.net/bucket/avatars/user-uuid/avatar-45x45.jpg",
+                  "width": 45,
+                  "height": 45
+                }
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "followersCount": {
+              "type": "number",
+              "example": 42,
+              "description": "Количество подписчиков"
+            },
+            "followingCount": {
+              "type": "number",
+              "example": 15,
+              "description": "Количество подписок"
+            },
+            "postsCount": {
+              "type": "number",
+              "example": 8,
+              "description": "Количество публикаций"
+            },
+            "isFollowed": {
+              "type": "object",
+              "example": true,
+              "nullable": true,
+              "description": "Подписан ли текущий пользователь (только при авторизации)"
+            }
+          },
+          "required": [
+            "userId",
+            "username",
+            "firstName",
+            "lastName",
+            "dateOfBirth",
+            "country",
+            "city",
+            "aboutMe",
+            "avatar",
+            "followersCount",
+            "followingCount",
+            "postsCount",
+            "isFollowed"
+          ]
+        },
+        "AvatarVariantSwagger": {
+          "type": "object",
+          "properties": {
+            "userId": {
+              "type": "string",
+              "example": "user-uuid",
+              "description": "Идентификатор пользователя."
+            },
+            "url": {
+              "type": "string",
+              "example": "https://storage.yandexcloud.net/bucket/avatars/user-uuid/avatar-192x192.jpg",
+              "description": "URL изображения аватара."
+            },
+            "width": {
+              "type": "number",
+              "example": 192,
+              "description": "Ширина изображения в пикселях."
+            },
+            "height": {
+              "type": "number",
+              "example": 192,
+              "description": "Высота изображения в пикселях."
+            }
+          },
+          "required": [
+            "userId",
+            "url",
+            "width",
+            "height"
+          ]
+        },
+        "BadRequestUploadAvatarSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Validation failed",
+              "description": "Сообщение об ошибке валидации или бизнес-ошибке."
+            },
+            "errorsMessages": {
+              "example": [
+                {
+                  "field": "avatar",
+                  "message": "avatar must be an image file (jpeg) and not exceed 1MB"
+                }
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "UnauthorizedUploadAvatarSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Unauthorized."
+            },
+            "errorsMessages": {
+              "example": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "UnauthorizedDeleteAvatarSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Unauthorized."
+            },
+            "errorsMessages": {
+              "example": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "UpdateProfileDto": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "example": "newusername",
+              "description": "Имя пользователя (6-30 символов, только буквы, цифры, _ и -)"
+            },
+            "firstName": {
+              "type": "string",
+              "example": "John",
+              "description": "Имя (1-50 символов, только буквы)"
+            },
+            "lastName": {
+              "type": "string",
+              "example": "Doe",
+              "description": "Фамилия (1-50 символов, только буквы)"
+            },
+            "dateOfBirth": {
+              "format": "date-time",
+              "type": "string",
+              "example": "1990-01-01T00:00:00.000Z",
+              "description": "Дата рождения (формат ISO, минимум 13 лет)",
+              "nullable": true
+            },
+            "country": {
+              "type": "string",
+              "example": "Russia",
+              "description": "Страна",
+              "nullable": true
+            },
+            "city": {
+              "type": "string",
+              "example": "Moscow",
+              "description": "Город",
+              "nullable": true
+            },
+            "aboutMe": {
+              "type": "string",
+              "example": "About me text",
+              "description": "О себе (до 200 символов)",
+              "nullable": true,
+              "maxLength": 200
+            }
+          }
+        },
+        "UserSearchItemViewDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "example": "user-uuid"
+            },
+            "username": {
+              "type": "string",
+              "example": "username123"
+            },
+            "avatarUrl": {
+              "type": "object",
+              "example": "https://...",
+              "nullable": true
+            },
+            "profileLink": {
+              "type": "string",
+              "example": "/profile/username123"
+            }
+          },
+          "required": [
+            "id",
+            "username",
+            "avatarUrl",
+            "profileLink"
+          ]
+        },
+        "SearchUsersResultViewDto": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/UserSearchItemViewDto"
+              }
+            },
+            "nextCursor": {
+              "type": "object",
+              "nullable": true,
+              "description": "Cursor for next page"
+            },
+            "hasMore": {
+              "type": "boolean",
+              "description": "Whether there are more items"
+            }
+          },
+          "required": [
+            "items",
+            "nextCursor",
+            "hasMore"
+          ]
+        },
+        "CreatePostPhotoSwagger": {
+          "type": "object",
+          "properties": {
+            "photoId": {
+              "type": "string",
+              "example": "photo-123",
+              "description": "Идентификатор фотографии (UUID из Files сервиса)."
+            },
+            "s3Key": {
+              "type": "string",
+              "example": "photos/user/123-uuid.jpg",
+              "description": "S3 ключ файла."
+            },
+            "url": {
+              "type": "string",
+              "example": "https://storage.yandexcloud.net/bucket/photos/user/123-uuid.jpg",
+              "description": "Публичный URL фотографии."
+            }
+          },
+          "required": [
+            "photoId",
+            "s3Key",
+            "url"
+          ]
+        },
+        "CreatePostRequestSwagger": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "example": "Лучший отпуск",
+              "maxLength": 500,
+              "description": "Описание поста. Необязательное поле (до 500 символов)."
+            },
+            "photos": {
+              "description": "Список фотографий, которые должны быть прикреплены к посту и их данные из Files сервиса.",
+              "minItems": 1,
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CreatePostPhotoSwagger"
+              }
+            }
+          },
+          "required": [
+            "photos"
+          ]
+        },
+        "PostPhotoSwagger": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "example": "photo-uuid"
+            },
+            "photoId": {
+              "type": "string",
+              "example": "photo-storage-id"
+            },
+            "s3Key": {
+              "type": "string",
+              "example": "photos/user-123/1731144872000-uuid.jpg"
+            },
+            "url": {
+              "type": "string",
+              "example": "https://storage.yandexcloud.net/bucket/photos/user-123/1731144872000-uuid.jpg"
+            },
+            "order": {
+              "type": "number",
+              "example": 0
+            },
+            "createdAt": {
+              "type": "string",
+              "example": "2025-11-09T10:00:00.000Z"
+            }
+          },
+          "required": [
+            "id",
+            "photoId",
+            "s3Key",
+            "url",
+            "order",
+            "createdAt"
+          ]
+        },
+        "PostViewSwagger": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "example": "post-uuid"
+            },
+            "authorId": {
+              "type": "string",
+              "example": "user-uuid"
+            },
+            "description": {
+              "type": "object",
+              "example": "Мой первый пост",
+              "nullable": true
+            },
+            "createdAt": {
+              "type": "string",
+              "example": "2025-11-09T10:00:00.000Z"
+            },
+            "updatedAt": {
+              "type": "string",
+              "example": "2025-11-09T10:05:00.000Z"
+            },
+            "deletedAt": {
+              "type": "object",
+              "example": null,
+              "nullable": true
+            },
+            "photos": {
+              "description": "Возвращается, когда в ответ включены фотографии поста.",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/PostPhotoSwagger"
+              }
+            }
+          },
+          "required": [
+            "id",
+            "authorId",
+            "description",
+            "createdAt",
+            "updatedAt",
+            "deletedAt"
+          ]
+        },
+        "BadRequestPostSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Validation failed"
+            },
+            "errorsMessages": {
+              "example": [
+                {
+                  "field": "description",
+                  "message": "description must be a string"
+                }
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "UnauthorizedPostSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Unauthorized."
+            },
+            "errorsMessages": {
+              "example": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "CommentViewSwagger": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "example": "comment-uuid"
+            },
+            "content": {
+              "type": "string",
+              "example": "Текст комментария"
+            },
+            "authorId": {
+              "type": "string",
+              "example": "user-uuid"
+            },
+            "userName": {
+              "type": "string",
+              "example": "UserName"
+            },
+            "createdAt": {
+              "type": "string",
+              "example": "2025-11-09T10:00:00.000Z"
+            }
+          },
+          "required": [
+            "id",
+            "content",
+            "authorId",
+            "userName",
+            "createdAt"
+          ]
+        },
+        "CommentsListSwagger": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CommentViewSwagger"
+              }
+            },
+            "nextCursor": {
+              "type": "object",
+              "example": "next-comment-id",
+              "nullable": true
+            },
+            "hasMore": {
+              "type": "boolean",
+              "example": true
+            }
+          },
+          "required": [
+            "items",
+            "nextCursor",
+            "hasMore"
+          ]
+        },
+        "NotFoundPostSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Post with ID post-uuid not found"
+            },
+            "errorsMessages": {
+              "example": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "CreateCommentRequestSwagger": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "example": "Отличный пост!",
+              "minLength": 1,
+              "maxLength": 300,
+              "description": "Текст комментария (от 1 до 300 символов)"
+            }
+          },
+          "required": [
+            "content"
+          ]
+        },
+        "UpdatePostInputDto": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "example": "Многобуковок"
+            }
+          },
+          "required": [
+            "description"
+          ]
+        },
+        "ForbiddenPostSwagger": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "example": "Forbidden resource"
+            },
+            "errorsMessages": {
+              "example": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "message",
+            "errorsMessages"
+          ]
+        },
+        "PaginatedViewDto": {
+          "type": "object",
+          "properties": {
+            "totalCount": {
+              "type": "number"
+            },
+            "pageSize": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "totalCount",
+            "pageSize"
+          ]
+        },
+        "PostPhoto": {
+          "type": "object",
+          "properties": {
+            "photoId": {
+              "type": "string",
+              "example": "photo-storage-id"
+            },
+            "url": {
+              "type": "string",
+              "example": "https://storage.yandexcloud.net/bucket/photos/user-123/1731144872000-uuid.jpg"
+            },
+            "order": {
+              "type": "number",
+              "example": 0
+            },
+            "createdAt": {
+              "format": "date-time",
+              "type": "string",
+              "example": "2025-11-09T10:00:00.000Z"
+            }
+          },
+          "required": [
+            "photoId",
+            "url",
+            "order",
+            "createdAt"
+          ]
+        },
+        "PostViewDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "example": "post-uuid"
+            },
+            "authorId": {
+              "type": "string",
+              "example": "user-uuid"
+            },
+            "userName": {
+              "type": "string",
+              "example": "UserName"
+            },
+            "description": {
+              "type": "object",
+              "example": "Мой первый пост",
+              "nullable": true
+            },
+            "createdAt": {
+              "format": "date-time",
+              "type": "string",
+              "example": "2025-11-09T10:00:00.000Z"
+            },
+            "updatedAt": {
+              "format": "date-time",
+              "type": "string",
+              "example": "2025-11-09T10:05:00.000Z"
+            },
+            "photos": {
+              "description": "Возвращается, когда в ответ включены фотографии поста.",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/PostPhoto"
+              }
+            },
+            "authorAvatarUrl": {
+              "type": "object",
+              "example": "https://avatars.example.com/user.jpg",
+              "nullable": true,
+              "description": "URL аватара автора поста (для ленты подписок)."
+            }
+          },
+          "required": [
+            "id",
+            "authorId",
+            "userName",
+            "description",
+            "createdAt",
+            "updatedAt",
+            "authorAvatarUrl"
+          ]
+        },
+        "GetPostsByUserIdBadRequest": {
+          "type": "object",
+          "properties": {
+            "errorsMessages": {
+              "example": [
+                {
+                  "message": "sortBy must be one of the following values: createdAt, title; Received value: 123",
+                  "field": "sortBy"
+                }
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "errorsMessages"
+          ]
+        },
+        "PublicStatsSwagger": {
+          "type": "object",
+          "properties": {
+            "usersCount": {
+              "type": "number",
+              "example": 148
+            },
+            "recentPosts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/PostViewSwagger"
+              }
+            }
+          },
+          "required": [
+            "usersCount",
+            "recentPosts"
+          ]
+        },
+        "SubscriptionPaymentsPlanViewDto": {
+          "type": "object",
+          "properties": {}
+        },
+        "CreateSubscriptionDto": {
+          "type": "object",
+          "properties": {
+            "subscriptionPaymentsPlanId": {
+              "type": "string",
+              "description": "Subscription plan ID",
+              "example": "plan-uuid-123"
+            },
+            "accountType": {
+              "type": "string",
+              "description": "Account type",
+              "enum": [
+                "PERSONAL",
+                "BUSINESS"
+              ],
+              "example": "BUSINESS",
+              "default": "PERSONAL"
+            },
+            "paymentProvider": {
+              "type": "string",
+              "description": "Payment provider",
+              "enum": [
+                "PAYPAL",
+                "STRIPE"
+              ],
+              "example": "STRIPE",
+              "default": "PAYPAL"
+            }
+          },
+          "required": [
+            "subscriptionPaymentsPlanId",
+            "accountType",
+            "paymentProvider"
+          ]
+        },
+        "ToggleAutoRenewalDto": {
+          "type": "object",
+          "properties": {
+            "autoRenewal": {
+              "type": "boolean",
+              "description": "Enable or disable auto-renewal",
+              "example": true
+            }
+          },
+          "required": [
+            "autoRenewal"
+          ]
+        },
+        "SubscriptionPaymentViewDto": {
+          "type": "object",
+          "properties": {}
+        },
+        "PaymentHistoryViewDto": {
+          "type": "object",
+          "properties": {}
+        },
+        "CreateOrderDto": {
+          "type": "object",
+          "properties": {
+            "amount": {
+              "type": "number",
+              "description": "Amount in currency units",
+              "example": 100,
+              "minimum": 0.01
+            },
+            "currency": {
+              "type": "string",
+              "description": "Currency code",
+              "example": "USD",
+              "default": "USD"
+            },
+            "description": {
+              "type": "string",
+              "description": "Payment description",
+              "example": "Premium subscription"
+            },
+            "provider": {
+              "type": "string",
+              "description": "Payment provider",
+              "example": "PAYPAL",
+              "enum": [
+                "PAYPAL",
+                "STRIPE"
+              ],
+              "default": "PAYPAL"
+            }
+          },
+          "required": [
+            "amount"
+          ]
+        },
+        "RefundDto": {
+          "type": "object",
+          "properties": {
+            "amount": {
+              "type": "number",
+              "description": "Refund amount (partial refund if less than original amount)",
+              "example": 50
+            },
+            "reason": {
+              "type": "string",
+              "description": "Reason for refund",
+              "example": "Customer request"
+            }
+          }
+        },
+        "NotifyResponseDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "example": "clxyz123"
+            },
+            "isReady": {
+              "type": "boolean",
+              "example": false
+            },
+            "message": {
+              "type": "string",
+              "example": "Ваш пост был лайкнут"
+            },
+            "createdAt": {
+              "format": "date-time",
+              "type": "string",
+              "example": "2024-01-01T00:00:00.000Z"
+            }
+          },
+          "required": [
+            "id",
+            "isReady",
+            "message",
+            "createdAt"
+          ]
+        },
+        "GetNotificationsBadRequest": {
+          "type": "object",
+          "properties": {
+            "errorsMessages": {
+              "example": [
+                {
+                  "message": "sortBy must be one of the following values: createdAt; Received value: invalid",
+                  "field": "sortBy"
+                }
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "errorsMessages"
+          ]
+        },
+        "MarkAsReadBadRequest": {
+          "type": "object",
+          "properties": {
+            "errorsMessages": {
+              "example": [
+                {
+                  "message": "each value in ids must be a string",
+                  "field": "ids"
+                }
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "errorsMessages"
+          ]
+        }
+      }
+    }
+  },
+  "customOptions": {}
+};
+  url = options.swaggerUrl || url
+  let urls = options.swaggerUrls
+  let customOptions = options.customOptions
+  let spec1 = options.swaggerDoc
+  let swaggerOptions = {
+    spec: spec1,
+    url: url,
+    urls: urls,
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ],
+    plugins: [
+      SwaggerUIBundle.plugins.DownloadUrl
+    ],
+    layout: "StandaloneLayout"
+  }
+  for (let attrname in customOptions) {
+    swaggerOptions[attrname] = customOptions[attrname];
+  }
+  let ui = SwaggerUIBundle(swaggerOptions)
+
+  if (customOptions.initOAuth) {
+    ui.initOAuth(customOptions.initOAuth)
+  }
+
+  if (customOptions.authAction) {
+    ui.authActions.authorize(customOptions.authAction)
+  }
+  
+  window.ui = ui
+}

@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interview Arena — RPG Quiz</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;700&family=Nunito:wght@400;700&family=Fira+Code:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  button, select { touch-action: manipulation; }
+
+  :root, [data-theme="dark"] {
+    --bg: #0a0a1a;
+    --panel: #12122a;
+    --border: #2a2a5a;
+    --accent: #00bb66;
+    --accent2: #ff6b35;
+    --danger: #ff3355;
+    --gold: #ffd700;
+    --mana: #44aaff;
+    --text: #e0e0f0;
+    --dim: #6a6a9a;
+    --option-bg: #1a1a3a;
+    --option-hover: #1f1f4a;
+    --explanation-bg: #0d0d25;
+    --hp-bar-bg: #1a1a3a;
+    --correct-bg: rgba(0,187,102,0.15);
+    --wrong-bg: rgba(255,51,85,0.15);
+    --overlay-bg: rgba(0,0,0,0.85);
+    --theme-btn-bg: #1a1a3a;
+  }
+
+  [data-theme="light"] {
+    --bg: #eef1f5;
+    --panel: #ffffff;
+    --border: #c0c8d8;
+    --accent: #008855;
+    --accent2: #d45500;
+    --danger: #cc2244;
+    --gold: #b8960c;
+    --mana: #2277cc;
+    --text: #1a1a2e;
+    --dim: #5a6378;
+    --option-bg: #f0f2f6;
+    --option-hover: #e4e8f0;
+    --explanation-bg: #f7f8fb;
+    --hp-bar-bg: #d8dce6;
+    --correct-bg: rgba(0,136,85,0.12);
+    --wrong-bg: rgba(204,34,68,0.12);
+    --overlay-bg: rgba(255,255,255,0.9);
+    --theme-btn-bg: #e4e8f0;
+  }
+
+  body {
+    font-family: var(--font);
+    font-size: var(--fs);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto;
+  }
+
+  /* font & size variables (set via JS) */
+  :root { --font: 'Press Start 2P', monospace; --fs: 14px; }
+
+  #game {
+    width: 900px;
+    max-width: 95vw;
+    position: relative;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ===== TITLE SCREEN ===== */
+  #title-screen {
+    text-align: center;
+    animation: fadeIn 1s;
+  }
+
+  #title-screen h1 {
+    font-size: 2em;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(0,255,136,0.5);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+
+  #title-screen .subtitle {
+    font-size: 0.8em;
+    color: var(--dim);
+    margin-bottom: 40px;
+  }
+
+  .menu-btn {
+    display: block;
+    width: 300px;
+    margin: 12px auto;
+    padding: 16px;
+    font-family: inherit;
+    font-size: 0.85em;
+    background: var(--panel);
+    color: var(--accent);
+    border: 2px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .menu-btn:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 15px rgba(0,255,136,0.3);
+    transform: scale(1.03);
+  }
+
+  /* ===== DUNGEON SELECT ===== */
+  #dungeon-screen { text-align: center; }
+  #dungeon-screen h2 {
+    font-size: 1.15em;
+    color: var(--gold);
+    margin-bottom: 30px;
+  }
+
+  .dungeon-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 600px;
+    margin: 0 auto 20px;
+  }
+
+  .dungeon-card {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    padding: 20px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+  }
+
+  .dungeon-card:hover:not(.locked) {
+    border-color: var(--accent);
+    box-shadow: 0 0 15px rgba(0,255,136,0.2);
+  }
+
+  .dungeon-card.locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .dungeon-card.cleared {
+    border-color: var(--gold);
+    opacity: 0.7;
+  }
+
+  .dungeon-card .icon { font-size: 2em; margin-bottom: 8px; }
+  .dungeon-card .name { font-size: 0.8em; color: var(--accent); margin-bottom: 6px; }
+  .dungeon-card .desc { font-size: 0.6em; color: var(--dim); line-height: 1.6; }
+  .dungeon-card .status { font-size: 0.6em; color: var(--gold); margin-top: 8px; }
+
+  /* ===== BATTLE SCREEN ===== */
+  #battle-screen { animation: fadeIn 0.5s; }
+
+  .battle-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    font-size: 0.65em;
+    color: var(--dim);
+  }
+
+  .battle-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 20px;
+  }
+
+  .combatant {
+    flex: 1;
+    background: var(--panel);
+    border: 2px solid var(--border);
+    padding: 16px;
+    text-align: center;
+    position: relative;
+    min-height: 180px;
+  }
+
+  .combatant .sprite {
+    font-size: 3.4em;
+    margin: 10px 0;
+    display: inline-block;
+    transition: transform 0.2s;
+  }
+
+  .combatant .name {
+    font-size: 0.7em;
+    margin-bottom: 8px;
+    color: var(--accent);
+  }
+
+  .enemy-box .name { color: var(--danger); }
+  .enemy-box.boss .name { color: var(--gold); }
+
+  .hp-bar-container {
+    width: 100%;
+    height: 14px;
+    background: var(--hp-bar-bg);
+    border: 1px solid var(--border);
+    margin: 4px 0;
+    position: relative;
+  }
+
+  .hp-bar {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.5s ease;
+  }
+
+  .enemy-box .hp-bar { background: var(--danger); }
+  .enemy-box.boss .hp-bar { background: var(--gold); }
+
+  .hp-text {
+    font-size: 0.5em;
+    color: var(--dim);
+    position: absolute;
+    top: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+  }
+
+  .stats-line {
+    font-size: 0.6em;
+    color: var(--dim);
+    margin-top: 6px;
+  }
+
+  .xp-bar-container {
+    width: 100%;
+    height: 8px;
+    background: var(--hp-bar-bg);
+    border: 1px solid var(--border);
+    margin-top: 6px;
+  }
+
+  .xp-bar {
+    height: 100%;
+    background: var(--mana);
+    transition: width 0.5s ease;
+  }
+
+  .vs-divider {
+    font-size: 1.4em;
+    color: var(--accent2);
+    align-self: center;
+    text-shadow: 0 0 10px rgba(255,107,53,0.5);
+    flex-shrink: 0;
+  }
+
+  /* Question area */
+  .question-area {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+
+  .question-text {
+    font-size: 0.8em;
+    line-height: 1.8;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .option-btn {
+    font-family: inherit;
+    font-size: 0.65em;
+    padding: 14px 12px;
+    background: var(--option-bg);
+    color: var(--text);
+    border: 2px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    line-height: 1.6;
+  }
+
+  .option-btn:hover:not(:disabled),
+  .option-btn:active:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--option-hover);
+  }
+
+  .option-btn:disabled { cursor: default; }
+
+  .option-btn.correct {
+    border-color: var(--accent);
+    background: var(--correct-bg);
+    color: var(--accent);
+  }
+
+  .option-btn.wrong {
+    border-color: var(--danger);
+    background: var(--wrong-bg);
+    color: var(--danger);
+  }
+
+  /* Explanation */
+  .explanation {
+    display: none;
+    background: var(--explanation-bg);
+    border: 1px solid var(--border);
+    padding: 14px;
+    margin-top: 12px;
+    font-size: 0.65em;
+    line-height: 1.8;
+    color: var(--dim);
+  }
+
+  .explanation.visible { display: block; }
+  .explanation strong { color: var(--accent); }
+
+  /* Continue button */
+  .continue-btn {
+    display: none;
+    width: 100%;
+    margin-top: 12px;
+    padding: 14px;
+    font-family: inherit;
+    font-size: 0.8em;
+    background: var(--panel);
+    color: var(--accent);
+    border: 2px solid var(--accent);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .continue-btn.visible { display: block; }
+  .continue-btn:hover { background: rgba(0,255,136,0.1); }
+
+  /* ===== DAMAGE FLOAT ===== */
+  .damage-float {
+    position: absolute;
+    font-size: 1.3em;
+    font-family: inherit;
+    pointer-events: none;
+    z-index: 10;
+    animation: floatUp 1.2s forwards;
+  }
+
+  .damage-float.hit { color: var(--accent); }
+  .damage-float.miss { color: var(--danger); }
+  .damage-float.gold { color: var(--gold); }
+
+  @keyframes floatUp {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-60px) scale(1.3); }
+  }
+
+  /* ===== VICTORY / DEFEAT ===== */
+  #victory-screen, #defeat-screen, #gameover-screen { text-align: center; }
+
+  #victory-screen h2 {
+    font-size: 1.4em;
+    color: var(--gold);
+    text-shadow: 0 0 20px rgba(255,215,0,0.5);
+    margin-bottom: 16px;
+  }
+
+  #defeat-screen h2 {
+    font-size: 1.4em;
+    color: var(--danger);
+    text-shadow: 0 0 20px rgba(255,51,85,0.5);
+    margin-bottom: 16px;
+  }
+
+  #gameover-screen h2 {
+    font-size: 1.7em;
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(255,215,0,0.6);
+    margin-bottom: 10px;
+  }
+
+  .result-stats {
+    font-size: 0.65em;
+    line-height: 2.2;
+    color: var(--dim);
+    margin: 20px 0;
+  }
+
+  .result-stats span { color: var(--accent); }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  .shake { animation: shake 0.3s ease; }
+
+  @keyframes attackRight {
+    0% { transform: translateX(0); }
+    40% { transform: translateX(30px); }
+    100% { transform: translateX(0); }
+  }
+
+  @keyframes attackLeft {
+    0% { transform: translateX(0); }
+    40% { transform: translateX(-30px); }
+    100% { transform: translateX(0); }
+  }
+
+  .attack-right .sprite { animation: attackRight 0.4s ease; }
+  .attack-left .sprite { animation: attackLeft 0.4s ease; }
+
+  /* ===== LEVEL UP OVERLAY ===== */
+  .overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--overlay-bg);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .overlay.visible { display: flex; }
+
+  .overlay-content {
+    animation: fadeIn 0.5s;
+  }
+
+  .overlay-content h2 {
+    font-size: 1.6em;
+    color: var(--gold);
+    text-shadow: 0 0 20px rgba(255,215,0,0.5);
+    margin-bottom: 16px;
+  }
+
+  .overlay-content p {
+    font-size: 0.7em;
+    color: var(--dim);
+    line-height: 2;
+    margin-bottom: 20px;
+  }
+
+  .overlay-content p span { color: var(--accent); }
+
+  /* ===== SETTINGS ===== */
+  .settings-toggle {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--theme-btn-bg);
+    border: 2px solid var(--border);
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    z-index: 201;
+    padding: 0;
+    line-height: 1;
+  }
+
+  .settings-toggle:hover {
+    border-color: var(--accent);
+    transform: scale(1.1);
+  }
+
+  .settings-panel {
+    display: none;
+    position: fixed;
+    top: 66px;
+    right: 14px;
+    background: var(--panel);
+    border: 2px solid var(--border);
+    padding: 16px 18px;
+    z-index: 200;
+    min-width: 240px;
+    animation: fadeIn 0.2s;
+  }
+
+  .settings-panel.visible { display: block; }
+
+  .settings-panel label {
+    display: block;
+    font-size: 9px;
+    color: var(--dim);
+    margin-bottom: 6px;
+    margin-top: 14px;
+  }
+
+  .settings-panel label:first-child { margin-top: 0; }
+
+  .settings-panel select,
+  .settings-panel input[type="range"] {
+    width: 100%;
+    font-family: inherit;
+    font-size: 9px;
+    padding: 8px;
+    background: var(--option-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    appearance: auto;
+  }
+
+  .settings-panel input[type="range"] {
+    padding: 4px 0;
+    accent-color: var(--accent);
+  }
+
+  .size-value {
+    font-size: 9px;
+    color: var(--accent);
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  /* ===== RESPONSIVE ===== */
+
+  /* Tablet */
+  @media (max-width: 768px) {
+    body { padding: 10px; align-items: flex-start; }
+    #game { max-width: 100vw; padding: 0 4px; }
+
+    .menu-btn { width: 90%; max-width: 300px; }
+    .dungeon-grid { gap: 10px; }
+    .dungeon-card { padding: 14px 12px; }
+    .combatant { padding: 12px 10px; min-height: 140px; }
+    .question-area { padding: 14px; }
+  }
+
+  /* Phone */
+  @media (max-width: 500px) {
+    body { padding: 6px 2px; }
+    #game { max-width: 100vw; padding: 0 2px; }
+
+    #title-screen h1 { font-size: 1.3em; }
+    #title-screen .subtitle { margin-bottom: 24px; }
+
+    .dungeon-grid { grid-template-columns: 1fr; gap: 8px; }
+    .dungeon-card { padding: 12px 10px; }
+    .dungeon-card .icon { font-size: 1.4em; margin-bottom: 4px; }
+
+    .battle-area {
+      flex-direction: row; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;
+    }
+    .combatant {
+      flex: 1 1 45%; padding: 8px 6px; min-height: auto; min-width: 0;
+    }
+    .vs-divider { display: none; }
+    .combatant .sprite { font-size: 2em; margin: 2px 0; }
+    .combatant .name { font-size: 0.55em; margin-bottom: 4px; }
+    .hp-bar-container { height: 10px; }
+    .xp-bar-container { height: 6px; }
+
+    .battle-header { margin-bottom: 8px; }
+
+    .question-area { padding: 12px 10px; margin-bottom: 8px; }
+    .question-text { margin-bottom: 12px; }
+    .options { grid-template-columns: 1fr; gap: 8px; }
+    .option-btn { padding: 12px 10px; min-height: 44px; }
+    .explanation { padding: 10px; margin-top: 10px; }
+    .continue-btn { padding: 14px 10px; min-height: 48px; }
+
+    .menu-btn { width: 100%; min-height: 48px; padding: 14px 10px; }
+
+    .settings-panel {
+      right: 4px;
+      left: 4px;
+      min-width: auto;
+      top: 60px;
+    }
+
+    .settings-toggle { top: 10px; right: 10px; width: 38px; height: 38px; }
+
+    .result-stats { margin: 14px 0; }
+    .overlay-content { padding: 0 16px; }
+  }
+
+  /* Very small phones */
+  @media (max-width: 360px) {
+    #title-screen h1 { font-size: 1em; }
+    .combatant .sprite { font-size: 1.8em; }
+  }
+
+  /* Touch-friendly: larger tap targets */
+  @media (pointer: coarse) {
+    .option-btn { min-height: 48px; }
+    .menu-btn { min-height: 48px; }
+    .continue-btn { min-height: 52px; }
+    .dungeon-card { min-height: 70px; }
+    .settings-toggle { width: 44px; height: 44px; }
+    .settings-panel select { min-height: 40px; font-size: 11px; }
+  }
+
+  /* Safe area for notched phones */
+  @supports (padding: env(safe-area-inset-bottom)) {
+    body {
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+  }
+</style>
+</head>
+<body>
+<button class="settings-toggle" id="settings-toggle" onclick="toggleSettings()" title="Настройки">&#9881;</button>
+<div class="settings-panel" id="settings-panel">
+  <label>Тема</label>
+  <select id="sel-theme" onchange="applyTheme(this.value); localStorage.setItem('interviewArena_theme', this.value);">
+    <option value="dark">&#127769; Тёмная</option>
+    <option value="light">&#9728;&#65039; Светлая</option>
+  </select>
+
+  <label>Шрифт</label>
+  <select id="sel-font" onchange="applyFont(this.value);">
+    <option value="pixel">Press Start 2P (пиксельный)</option>
+    <option value="roboto">Roboto (чистый)</option>
+    <option value="nunito">Nunito (мягкий)</option>
+    <option value="fira">Fira Code (моноширинный)</option>
+    <option value="system">Системный</option>
+  </select>
+
+  <label>Размер текста</label>
+  <input type="range" id="sel-size" min="10" max="22" step="1" value="14" oninput="applySize(this.value);">
+  <div class="size-value" id="size-value">14px</div>
+</div>
+<div id="game">
+
+  <!-- TITLE SCREEN -->
+  <div id="title-screen" class="screen active">
+    <h1>INTERVIEW<br>ARENA</h1>
+    <p class="subtitle">Победи багов. Стань Junior'ом.</p>
+    <button class="menu-btn" onclick="startGame()">НОВАЯ ИГРА</button>
+    <button class="menu-btn" onclick="loadGame()">ПРОДОЛЖИТЬ</button>
+  </div>
+
+  <!-- DUNGEON SELECT -->
+  <div id="dungeon-screen" class="screen">
+    <h2>ВЫБЕРИ ПОДЗЕМЕЛЬЕ</h2>
+    <div class="dungeon-grid" id="dungeon-grid"></div>
+    <div class="stats-line" id="global-stats" style="text-align:center; margin-top: 10px;"></div>
+  </div>
+
+  <!-- BATTLE -->
+  <div id="battle-screen" class="screen">
+    <div class="battle-header">
+      <span id="dungeon-label"></span>
+      <span id="enemy-counter"></span>
+    </div>
+
+    <div class="battle-area">
+      <div class="combatant player-box" id="player-box">
+        <div class="name" id="player-name">DEVELOPER</div>
+        <div class="sprite" id="player-sprite">🧑‍💻</div>
+        <div class="hp-bar-container">
+          <div class="hp-text" id="player-hp-text"></div>
+          <div class="hp-bar" id="player-hp-bar"></div>
+        </div>
+        <div class="stats-line" id="player-stats"></div>
+        <div class="xp-bar-container">
+          <div class="xp-bar" id="player-xp-bar"></div>
+        </div>
+        <div class="stats-line" id="player-xp-text"></div>
+      </div>
+
+      <div class="vs-divider">VS</div>
+
+      <div class="combatant enemy-box" id="enemy-box">
+        <div class="name" id="enemy-name"></div>
+        <div class="sprite" id="enemy-sprite"></div>
+        <div class="hp-bar-container">
+          <div class="hp-text" id="enemy-hp-text"></div>
+          <div class="hp-bar" id="enemy-hp-bar"></div>
+        </div>
+        <div class="stats-line" id="enemy-info"></div>
+      </div>
+    </div>
+
+    <div class="question-area">
+      <div class="question-text" id="question-text"></div>
+      <div class="options" id="options-container"></div>
+      <div class="explanation" id="explanation"></div>
+      <button class="continue-btn" id="continue-btn" onclick="nextStep()">ДАЛЕЕ →</button>
+    </div>
+  </div>
+
+  <!-- DUNGEON VICTORY -->
+  <div id="victory-screen" class="screen">
+    <h2 id="victory-title">ПОДЗЕМЕЛЬЕ ПРОЙДЕНО!</h2>
+    <div class="result-stats" id="victory-stats"></div>
+    <button class="menu-btn" onclick="showDungeonSelect()">К ПОДЗЕМЕЛЬЯМ</button>
+  </div>
+
+  <!-- DEFEAT -->
+  <div id="defeat-screen" class="screen">
+    <h2>ПОРАЖЕНИЕ</h2>
+    <div class="result-stats" id="defeat-stats"></div>
+    <button class="menu-btn" onclick="retryDungeon()">ПОПРОБОВАТЬ СНОВА</button>
+    <button class="menu-btn" onclick="showDungeonSelect()" style="margin-top:8px">К ПОДЗЕМЕЛЬЯМ</button>
+  </div>
+
+  <!-- GAME COMPLETE -->
+  <div id="gameover-screen" class="screen">
+    <h2>ТЫ СТАЛ JUNIOR'ОМ!</h2>
+    <p class="subtitle">Все подземелья пройдены</p>
+    <div class="result-stats" id="final-stats"></div>
+    <button class="menu-btn" onclick="startGame()">НОВАЯ ИГРА</button>
+  </div>
+
+  <!-- LEVEL UP OVERLAY -->
+  <div class="overlay" id="levelup-overlay">
+    <div class="overlay-content">
+      <h2>LEVEL UP!</h2>
+      <p id="levelup-text"></p>
+      <button class="menu-btn" onclick="closeLevelUp()">ОТЛИЧНО!</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===========================
+// SETTINGS
+// ===========================
+const FONTS = {
+  pixel:  "'Press Start 2P', monospace",
+  roboto: "'Roboto', sans-serif",
+  nunito: "'Nunito', sans-serif",
+  fira:   "'Fira Code', monospace",
+  system: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+};
+
+function initSettings() {
+  const theme = localStorage.getItem('interviewArena_theme') || 'dark';
+  const font  = localStorage.getItem('interviewArena_font')  || 'pixel';
+  const size  = localStorage.getItem('interviewArena_size')  || '14';
+  applyTheme(theme);
+  applyFont(font);
+  applySize(size);
+}
+
+function toggleSettings() {
+  document.getElementById('settings-panel').classList.toggle('visible');
+}
+
+// Close panel on outside click
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('settings-panel');
+  const btn = document.getElementById('settings-toggle');
+  if (!panel.contains(e.target) && e.target !== btn) {
+    panel.classList.remove('visible');
+  }
+});
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('sel-theme').value = theme;
+  localStorage.setItem('interviewArena_theme', theme);
+}
+
+function applyFont(key) {
+  document.documentElement.style.setProperty('--font', FONTS[key] || FONTS.pixel);
+  document.getElementById('sel-font').value = key;
+  localStorage.setItem('interviewArena_font', key);
+}
+
+function applySize(px) {
+  px = String(px);
+  document.documentElement.style.setProperty('--fs', px + 'px');
+  document.getElementById('sel-size').value = px;
+  document.getElementById('size-value').textContent = px + 'px';
+  localStorage.setItem('interviewArena_size', px);
+}
+
+initSettings();
+
+// ===========================
+// QUESTION DATABASE
+// ===========================
+const QUESTIONS = {
+  "html-css": [
+    {
+      q: "Что такое семантическая вёрстка?",
+      o: [
+        "Использование тегов по их смысловому назначению (header, nav, article...)",
+        "Вёрстка только с помощью div и span",
+        "Использование CSS Grid для всех layout'ов",
+        "Вёрстка без использования классов"
+      ],
+      a: 0,
+      e: "Семантическая вёрстка — это использование HTML-тегов в соответствии с их значением. Например, <nav> для навигации, <article> для статьи. Это помогает SEO, доступности и читаемости кода."
+    },
+    {
+      q: "Чем отличаются display: inline, block и inline-block?",
+      o: [
+        "Ничем, это синонимы",
+        "block занимает всю ширину и начинается с новой строки; inline — в строке, без width/height; inline-block — в строке, но с width/height",
+        "inline и inline-block одинаковы, block — устаревший",
+        "block нельзя использовать внутри flex-контейнера"
+      ],
+      a: 1,
+      e: "block: занимает всю ширину, новая строка. inline: в потоке текста, нельзя задать width/height. inline-block: как inline, но можно задать размеры."
+    },
+    {
+      q: "Что такое CSS Box Model?",
+      o: [
+        "Способ создания 3D-эффектов в CSS",
+        "Модель, описывающая структуру элемента: content → padding → border → margin",
+        "Метод центрирования элементов",
+        "Система наименования CSS-классов"
+      ],
+      a: 1,
+      e: "Box Model описывает, как элемент занимает место: содержимое (content), внутренний отступ (padding), граница (border), внешний отступ (margin). box-sizing: border-box включает padding и border в width."
+    },
+    {
+      q: "Для чего нужен z-index?",
+      o: [
+        "Для поворота элемента по оси Z",
+        "Для управления порядком наложения элементов (кто поверх кого)",
+        "Для задания zoom-уровня элемента",
+        "Для создания анимации по оси Z"
+      ],
+      a: 1,
+      e: "z-index управляет порядком наложения элементов по оси Z. Работает только на элементах с position, отличным от static. Создаёт stacking context."
+    },
+    {
+      q: "Что такое Flexbox?",
+      o: [
+        "JavaScript-библиотека для анимаций",
+        "CSS-модуль для создания одномерных layouts (в строку или колонку) с гибким распределением пространства",
+        "HTML-тег для создания гибких таблиц",
+        "Альтернатива CSS, написанная на Rust"
+      ],
+      a: 1,
+      e: "Flexbox — CSS-модуль для одномерных layout'ов. Контейнер (display: flex) управляет расположением дочерних элементов. Основные свойства: justify-content, align-items, flex-direction, gap."
+    },
+    {
+      q: "В чём разница между position: relative и position: absolute?",
+      o: [
+        "relative и absolute работают одинаково",
+        "relative сдвигает элемент относительно его исходной позиции; absolute — позиционирует относительно ближайшего positioned-предка",
+        "absolute сдвигает относительно исходной позиции, relative — относительно viewport",
+        "Оба удаляют элемент из потока документа"
+      ],
+      a: 1,
+      e: "relative: элемент остаётся в потоке, но визуально сдвигается от своей позиции. absolute: элемент вырывается из потока и позиционируется относительно ближайшего предка с position != static."
+    },
+    {
+      q: "Что такое CSS-специфичность (specificity)?",
+      o: [
+        "Скорость применения CSS-правил",
+        "Система приоритетов, определяющая какое CSS-правило победит при конфликте: inline > #id > .class > tag",
+        "Порядок подключения CSS-файлов",
+        "Количество CSS-свойств в правиле"
+      ],
+      a: 1,
+      e: "Специфичность — вес селектора. inline style (1000) > #id (100) > .class (10) > tag (1). При равной специфичности побеждает последнее правило. !important перебивает всё (но это анти-паттерн)."
+    },
+    {
+      q: "Что делает медиа-запрос @media?",
+      o: [
+        "Подключает внешние медиа-файлы (видео, аудио)",
+        "Позволяет применять CSS-правила в зависимости от характеристик устройства (ширина экрана, тип устройства и т.д.)",
+        "Оптимизирует загрузку изображений",
+        "Создаёт анимации для мобильных устройств"
+      ],
+      a: 1,
+      e: "@media позволяет адаптировать стили под размер экрана или тип устройства. Пример: @media (max-width: 768px) { ... } — стили для экранов уже 768px. Основа адаптивной вёрстки."
+    }
+  ],
+
+  "javascript": [
+    {
+      q: "В чём разница между let, const и var?",
+      o: [
+        "Разницы нет, это синонимы",
+        "var — функциональная область видимости + hoisting; let — блочная область, можно переназначать; const — блочная область, нельзя переназначать",
+        "let и const — устаревшие, var — современный",
+        "const делает объект полностью неизменяемым"
+      ],
+      a: 1,
+      e: "var: function scope, hoisting (поднимается наверх). let: block scope, можно переназначить. const: block scope, нельзя переназначить ссылку (но свойства объекта менять можно!)."
+    },
+    {
+      q: "Что такое замыкание (closure)?",
+      o: [
+        "Способ закрыть доступ к серверу",
+        "Функция, которая запоминает окружение (переменные), в котором была создана",
+        "Метод закрытия браузерного окна",
+        "Паттерн для блокировки event loop"
+      ],
+      a: 1,
+      e: "Closure — функция, которая имеет доступ к переменным из внешней функции даже после того, как внешняя функция завершилась. Основа многих паттернов в JS."
+    },
+    {
+      q: "Что такое Promise?",
+      o: [
+        "Синхронный способ обработки данных",
+        "HTML-тег для загрузки данных",
+        "Объект, представляющий результат асинхронной операции (pending → fulfilled/rejected)",
+        "CSS-свойство для анимаций"
+      ],
+      a: 2,
+      e: "Promise — объект-обещание. Имеет 3 состояния: pending (ожидание), fulfilled (успех), rejected (ошибка). Обрабатывается через .then()/.catch() или async/await."
+    },
+    {
+      q: "Чем отличается == от ===?",
+      o: [
+        "Ничем не отличаются",
+        "== сравнивает с приведением типов, === сравнивает без приведения (строгое сравнение)",
+        "=== сравнивает только строки, == — только числа",
+        "== для объектов, === для примитивов"
+      ],
+      a: 1,
+      e: "== (нестрогое): приводит типы перед сравнением (1 == '1' → true). === (строгое): сравнивает и значение, и тип (1 === '1' → false). Всегда используй ===."
+    },
+    {
+      q: "Что такое Event Loop?",
+      o: [
+        "CSS-анимация по кругу",
+        "Механизм, который позволяет JS выполнять асинхронный код, управляя очередью задач (call stack → task queue → microtask queue)",
+        "Цикл for для обработки событий DOM",
+        "React-хук для подписки на события"
+      ],
+      a: 1,
+      e: "Event Loop: JS однопоточный, но обрабатывает асинхронность через очереди. Call stack выполняет код → Web API обрабатывает async → коллбэки попадают в task/microtask queue → Event Loop перемещает их в call stack."
+    },
+    {
+      q: "Что такое hoisting?",
+      o: [
+        "Механизм «поднятия» объявлений переменных и функций в начало их области видимости перед выполнением кода",
+        "Способ загрузки скриптов в HTML",
+        "Оптимизация сборки webpack",
+        "Метод сортировки массивов"
+      ],
+      a: 0,
+      e: "Hoisting: JS «поднимает» объявления var и function в начало scope. var поднимается как undefined, function — целиком. let/const тоже поднимаются, но попадают в Temporal Dead Zone."
+    },
+    {
+      q: "Какие типы данных есть в JavaScript?",
+      o: [
+        "Только string, number и boolean",
+        "string, number, boolean, null, undefined, symbol, bigint (примитивы) + object",
+        "string, number, array, object",
+        "int, float, char, string, bool"
+      ],
+      a: 1,
+      e: "7 примитивов: string, number, boolean, null, undefined, symbol, bigint. И 1 ссылочный тип: object (включает массивы, функции, Date и т.д.)."
+    },
+    {
+      q: "Что такое деструктуризация (destructuring)?",
+      o: [
+        "Удаление свойств объекта из памяти",
+        "Синтаксис для удобного извлечения значений из объектов и массивов в отдельные переменные",
+        "Метод уничтожения DOM-элементов",
+        "Способ оптимизации garbage collection"
+      ],
+      a: 1,
+      e: "Деструктуризация: const {name, age} = user; или const [first, second] = arr; — удобное извлечение значений. Можно задавать значения по умолчанию и переименовывать."
+    }
+  ],
+
+  "react": [
+    {
+      q: "Что такое JSX?",
+      o: [
+        "Новый язык программирования от Meta",
+        "Синтаксическое расширение JS, позволяющее писать HTML-подобный код в JavaScript, который компилируется в вызовы React.createElement()",
+        "CSS-фреймворк для React",
+        "Формат данных, аналог JSON"
+      ],
+      a: 1,
+      e: "JSX — не HTML в JS, а синтаксический сахар. <div className='x'> компилируется в React.createElement('div', {className: 'x'}). Позволяет использовать JS-выражения через {}."
+    },
+    {
+      q: "В чём разница между state и props?",
+      o: [
+        "Это одно и то же",
+        "props — данные от родителя (read-only); state — внутреннее состояние компонента (изменяемое через setState/useState)",
+        "state передаётся от родителя, props — локальное",
+        "props — для классовых компонентов, state — для функциональных"
+      ],
+      a: 1,
+      e: "props: входные данные от родителя, неизменяемые для получателя. state: внутреннее состояние компонента, управляется через useState. Изменение state/props вызывает ре-рендер."
+    },
+    {
+      q: "Что такое Virtual DOM?",
+      o: [
+        "Копия реального DOM, хранимая на сервере",
+        "Лёгкое представление DOM в памяти. React сравнивает виртуальный и реальный DOM (reconciliation) и обновляет только изменившиеся элементы",
+        "Браузерный API для быстрой отрисовки",
+        "Дополнительный HTML-файл с кешем DOM"
+      ],
+      a: 1,
+      e: "Virtual DOM — JS-объект, копия реального DOM. При изменениях React создаёт новый VDOM, сравнивает со старым (diffing), и применяет минимум изменений к реальному DOM (reconciliation)."
+    },
+    {
+      q: "Для чего нужен useEffect?",
+      o: [
+        "Для стилизации компонентов",
+        "Для создания нового state",
+        "Для выполнения побочных эффектов: запросы к API, подписки, таймеры, работа с DOM",
+        "Для маршрутизации между страницами"
+      ],
+      a: 2,
+      e: "useEffect — хук для side effects. Принимает функцию и массив зависимостей. []: запуск один раз при монтировании. [dep]: при изменении dep. Без массива: на каждый рендер. Return-функция — cleanup."
+    },
+    {
+      q: "Зачем нужен key в списках React?",
+      o: [
+        "Для стилизации элементов списка",
+        "Для шифрования данных",
+        "Для идентификации элементов при reconciliation — помогает React понять, какие элементы изменились, добавились или удалились",
+        "Для доступа к элементу из родительского компонента"
+      ],
+      a: 2,
+      e: "key — уникальный идентификатор элемента списка. Без него React не может эффективно обновлять список. Нельзя использовать index как key если список меняется (добавление, удаление, сортировка)."
+    },
+    {
+      q: "Что такое управляемый компонент (controlled component)?",
+      o: [
+        "Компонент с доступом к серверу",
+        "Компонент, значение которого контролируется React-state (через value + onChange), а не DOM",
+        "Компонент, обёрнутый в React.memo",
+        "Компонент, созданный через class"
+      ],
+      a: 1,
+      e: "Controlled component: value элемента формы хранится в state, обновляется через onChange. React — единственный источник истины. Uncontrolled: значение хранится в DOM, доступ через ref."
+    },
+    {
+      q: "Что такое useRef и зачем он нужен?",
+      o: [
+        "Хук для отправки HTTP-запросов",
+        "Хук, создающий мутабельный объект {current: ...}, который сохраняется между рендерами. Используют для доступа к DOM и хранения значений без ре-рендера",
+        "Аналог useState, но для массивов",
+        "Хук для подключения Redux"
+      ],
+      a: 1,
+      e: "useRef возвращает {current: initialValue}. Изменение .current не вызывает ре-рендер. Два применения: 1) доступ к DOM-элементу (ref={myRef}), 2) хранение мутабельных значений между рендерами."
+    },
+    {
+      q: "Что делает React.memo?",
+      o: [
+        "Сохраняет компонент в localStorage",
+        "Мемоизирует компонент — предотвращает ре-рендер если props не изменились (поверхностное сравнение)",
+        "Добавляет мемо-заметку к компоненту для дебага",
+        "Запрещает использование state в компоненте"
+      ],
+      a: 1,
+      e: "React.memo — HOC для оптимизации. Оборачивает компонент и пропускает ре-рендер, если props не изменились (shallow compare). Можно передать свою функцию сравнения вторым аргументом."
+    }
+  ],
+
+  "git-http": [
+    {
+      q: "Какие основные HTTP-методы ты знаешь?",
+      o: [
+        "Только GET и POST",
+        "GET (получить), POST (создать), PUT (заменить), PATCH (частично обновить), DELETE (удалить)",
+        "FETCH, SEND, REMOVE, UPDATE",
+        "READ, WRITE, DELETE, MODIFY"
+      ],
+      a: 1,
+      e: "GET: получить ресурс. POST: создать. PUT: полная замена. PATCH: частичное обновление. DELETE: удалить. GET и DELETE обычно без body, POST/PUT/PATCH — с body."
+    },
+    {
+      q: "Что такое Git branch и зачем нужны ветки?",
+      o: [
+        "Branch — это копия всего репозитория на сервере",
+        "Лёгкий указатель на коммит, позволяющий вести параллельную разработку без влияния на основной код",
+        "Способ удаления файлов из репозитория",
+        "Метод сжатия истории коммитов"
+      ],
+      a: 1,
+      e: "Branch — указатель на коммит. Позволяет работать параллельно: feature-ветка не ломает main. После завершения работы ветка мержится обратно. git branch, git checkout -b, git merge."
+    },
+    {
+      q: "В чём разница между localStorage и sessionStorage?",
+      o: [
+        "Разницы нет",
+        "localStorage хранит данные без срока; sessionStorage — только до закрытия вкладки. Оба хранят строки, ~5MB",
+        "localStorage — на сервере, sessionStorage — в браузере",
+        "sessionStorage быстрее в 10 раз"
+      ],
+      a: 1,
+      e: "localStorage: данные сохраняются навсегда (до очистки). sessionStorage: данные живут пока открыта вкладка. Оба: key-value строки, ~5MB, синхронные, доступны через .setItem/.getItem."
+    },
+    {
+      q: "Что такое CORS?",
+      o: [
+        "Язык программирования для серверов",
+        "Cross-Origin Resource Sharing — механизм безопасности браузера, регулирующий запросы между разными доменами через HTTP-заголовки",
+        "Система кеширования ресурсов",
+        "Формат передачи данных, альтернатива JSON"
+      ],
+      a: 1,
+      e: "CORS: браузер блокирует запросы к другому origin (домен+порт+протокол). Сервер разрешает доступ через заголовок Access-Control-Allow-Origin. Preflight-запрос OPTIONS проверяет разрешения."
+    },
+    {
+      q: "Что делает git merge и git rebase? В чём разница?",
+      o: [
+        "Это одно и то же",
+        "merge создаёт merge-коммит, объединяя ветки; rebase переносит коммиты поверх другой ветки, создавая линейную историю",
+        "merge удаляет ветку, rebase сохраняет",
+        "rebase — для локальных веток, merge — только для remote"
+      ],
+      a: 1,
+      e: "merge: объединяет ветки, создавая merge-коммит. История разветвлённая. rebase: перемещает коммиты на верх другой ветки. История линейная. Правило: не rebase-ить публичные ветки."
+    },
+    {
+      q: "Что такое HTTP-статус-коды? Назови основные группы.",
+      o: [
+        "Только 200 и 404",
+        "1xx — инфо, 2xx — успех (200 OK, 201 Created), 3xx — редирект (301, 304), 4xx — ошибка клиента (400, 401, 403, 404), 5xx — ошибка сервера (500, 503)",
+        "A, B, C, D, E — пять категорий",
+        "Числа от 1 до 10 по важности"
+      ],
+      a: 1,
+      e: "200: OK. 201: Created. 301: Moved Permanently. 400: Bad Request. 401: Unauthorized. 403: Forbidden. 404: Not Found. 500: Internal Server Error. 503: Service Unavailable."
+    },
+    {
+      q: "Что такое cookie и чем они отличаются от localStorage?",
+      o: [
+        "Cookie и localStorage — это одно и то же",
+        "Cookie отправляются с каждым HTTP-запросом на сервер, имеют срок и размер ~4KB; localStorage — только в браузере, ~5MB, не отправляется на сервер",
+        "localStorage отправляется на сервер, cookie — нет",
+        "Cookie работают только с HTTPS"
+      ],
+      a: 1,
+      e: "Cookie: ~4KB, отправляются с каждым запросом к серверу, имеют expires/max-age, path, domain, httpOnly, secure. localStorage: ~5MB, только в браузере, не отправляются на сервер."
+    },
+    {
+      q: "Что такое REST API?",
+      o: [
+        "JavaScript-фреймворк для backend",
+        "Архитектурный стиль API: ресурсы идентифицируются URL, операции — HTTP-методами (GET/POST/PUT/DELETE), stateless, данные обычно в JSON",
+        "Протокол передачи файлов",
+        "База данных для хранения API-ключей"
+      ],
+      a: 1,
+      e: "REST: ресурс = URL (/users/1), действие = HTTP-метод. GET /users — список, POST /users — создать, GET /users/1 — один, PUT /users/1 — обновить, DELETE /users/1 — удалить. Stateless: сервер не хранит состояние клиента."
+    }
+  ]
+};
+
+// ===========================
+// ENEMY DEFINITIONS
+// ===========================
+const DUNGEONS = [
+  {
+    id: "html-css",
+    name: "HTML / CSS",
+    icon: "🎨",
+    desc: "Семантика, Box Model, Flexbox, позиционирование",
+    enemies: [
+      { name: "Broken Layout", sprite: "🐛", hp: 40, atk: 12 },
+      { name: "Z-Index Mess", sprite: "👻", hp: 45, atk: 14 },
+      { name: "Div Soup", sprite: "🍜", hp: 50, atk: 13 },
+      { name: "CSS Specificity Ghost", sprite: "🦇", hp: 55, atk: 15 },
+    ],
+    boss: { name: "!important Dragon", sprite: "🐉", hp: 120, atk: 25 }
+  },
+  {
+    id: "javascript",
+    name: "JavaScript",
+    icon: "⚡",
+    desc: "Типы, замыкания, промисы, Event Loop",
+    enemies: [
+      { name: "Undefined Error", sprite: "💀", hp: 50, atk: 15 },
+      { name: "Callback Hell", sprite: "🐍", hp: 55, atk: 16 },
+      { name: "NaN Phantom", sprite: "👤", hp: 55, atk: 17 },
+      { name: "Type Coercion Imp", sprite: "😈", hp: 60, atk: 18 },
+    ],
+    boss: { name: "Memory Leak Hydra", sprite: "🐙", hp: 140, atk: 30 }
+  },
+  {
+    id: "react",
+    name: "React",
+    icon: "⚛️",
+    desc: "JSX, state/props, хуки, Virtual DOM",
+    enemies: [
+      { name: "Infinite Loop Demon", sprite: "🔄", hp: 55, atk: 17 },
+      { name: "Prop Drilling Mole", sprite: "🐀", hp: 60, atk: 18 },
+      { name: "Stale State Zombie", sprite: "🧟", hp: 60, atk: 19 },
+      { name: "Re-render Phantom", sprite: "👁️", hp: 65, atk: 20 },
+    ],
+    boss: { name: "Re-render Kraken", sprite: "🦑", hp: 160, atk: 32 }
+  },
+  {
+    id: "git-http",
+    name: "Git / HTTP / Браузер",
+    icon: "🌐",
+    desc: "REST, статус-коды, CORS, Git, хранилища",
+    enemies: [
+      { name: "Merge Conflict Golem", sprite: "🗿", hp: 60, atk: 18 },
+      { name: "404 Specter", sprite: "👽", hp: 60, atk: 19 },
+      { name: "CORS Blocker", sprite: "🛡️", hp: 65, atk: 20 },
+      { name: "Cookie Thief", sprite: "🦝", hp: 65, atk: 21 },
+    ],
+    boss: { name: "Production Deploy Titan", sprite: "🤖", hp: 180, atk: 35 }
+  }
+];
+
+// ===========================
+// GAME STATE
+// ===========================
+let game = {
+  player: { hp: 100, maxHp: 100, atk: 30, level: 1, xp: 0, xpToNext: 80, gold: 0 },
+  currentDungeon: null,
+  currentEnemyIndex: 0,
+  currentEnemy: null,
+  currentQuestion: null,
+  dungeonQuestions: [],
+  cleared: [],
+  totalCorrect: 0,
+  totalWrong: 0,
+};
+
+// ===========================
+// SCREEN MANAGEMENT
+// ===========================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ===========================
+// START / LOAD
+// ===========================
+function startGame() {
+  game = {
+    player: { hp: 100, maxHp: 100, atk: 30, level: 1, xp: 0, xpToNext: 80, gold: 0 },
+    currentDungeon: null,
+    currentEnemyIndex: 0,
+    currentEnemy: null,
+    currentQuestion: null,
+    dungeonQuestions: [],
+    cleared: [],
+    totalCorrect: 0,
+    totalWrong: 0,
+  };
+  saveGame();
+  showDungeonSelect();
+}
+
+function loadGame() {
+  const saved = localStorage.getItem('interviewArena');
+  if (saved) {
+    const data = JSON.parse(saved);
+    game.player = data.player;
+    game.cleared = data.cleared || [];
+    game.totalCorrect = data.totalCorrect || 0;
+    game.totalWrong = data.totalWrong || 0;
+  }
+  showDungeonSelect();
+}
+
+function saveGame() {
+  localStorage.setItem('interviewArena', JSON.stringify({
+    player: game.player,
+    cleared: game.cleared,
+    totalCorrect: game.totalCorrect,
+    totalWrong: game.totalWrong,
+  }));
+}
+
+// ===========================
+// DUNGEON SELECT
+// ===========================
+function showDungeonSelect() {
+  showScreen('dungeon-screen');
+  const grid = document.getElementById('dungeon-grid');
+  grid.innerHTML = '';
+
+  DUNGEONS.forEach((d, i) => {
+    const cleared = game.cleared.includes(d.id);
+    const locked = i > 0 && !game.cleared.includes(DUNGEONS[i - 1].id);
+    const card = document.createElement('div');
+    card.className = 'dungeon-card' + (cleared ? ' cleared' : '') + (locked ? ' locked' : '');
+    card.innerHTML = `
+      <div class="icon">${d.icon}</div>
+      <div class="name">${d.name}</div>
+      <div class="desc">${d.desc}</div>
+      <div class="status">${cleared ? '✓ Пройдено' : locked ? '🔒 Заблокировано' : 'Доступно'}</div>
+    `;
+    if (!locked) {
+      card.onclick = () => enterDungeon(d.id);
+    }
+    grid.appendChild(card);
+  });
+
+  const stats = document.getElementById('global-stats');
+  stats.innerHTML = `Уровень: ${game.player.level} | HP: ${game.player.hp}/${game.player.maxHp} | Золото: ${game.player.gold} | Верно: ${game.totalCorrect} | Ошибки: ${game.totalWrong}`;
+}
+
+// ===========================
+// ENTER DUNGEON
+// ===========================
+function enterDungeon(dungeonId) {
+  const dungeon = DUNGEONS.find(d => d.id === dungeonId);
+  game.currentDungeon = dungeon;
+  game.currentEnemyIndex = 0;
+
+  // Shuffle questions
+  game.dungeonQuestions = shuffle([...QUESTIONS[dungeonId]]);
+
+  // Heal player partially between dungeons
+  game.player.hp = Math.min(game.player.maxHp, game.player.hp + Math.floor(game.player.maxHp * 0.5));
+
+  spawnEnemy();
+}
+
+// ===========================
+// SPAWN ENEMY
+// ===========================
+function spawnEnemy() {
+  const dungeon = game.currentDungeon;
+  const enemies = dungeon.enemies;
+  const isBoss = game.currentEnemyIndex >= enemies.length;
+
+  if (isBoss) {
+    const boss = dungeon.boss;
+    game.currentEnemy = { ...boss, maxHp: boss.hp, isBoss: true };
+  } else {
+    const template = enemies[game.currentEnemyIndex];
+    game.currentEnemy = { ...template, maxHp: template.hp, isBoss: false };
+  }
+
+  showScreen('battle-screen');
+  updateBattleUI();
+  askQuestion();
+}
+
+// ===========================
+// BATTLE UI
+// ===========================
+function updateBattleUI() {
+  const p = game.player;
+  const e = game.currentEnemy;
+  const d = game.currentDungeon;
+
+  document.getElementById('dungeon-label').textContent = `${d.icon} ${d.name}`;
+  document.getElementById('enemy-counter').textContent = e.isBoss ? '💀 БОСС' : `Враг ${game.currentEnemyIndex + 1}/${d.enemies.length}`;
+
+  // Player
+  document.getElementById('player-name').textContent = `DEVELOPER (Lvl ${p.level})`;
+  document.getElementById('player-hp-text').textContent = `${p.hp} / ${p.maxHp}`;
+  document.getElementById('player-hp-bar').style.width = (p.hp / p.maxHp * 100) + '%';
+  document.getElementById('player-stats').textContent = `ATK: ${p.atk} | Gold: ${p.gold}`;
+  document.getElementById('player-xp-bar').style.width = (p.xp / p.xpToNext * 100) + '%';
+  document.getElementById('player-xp-text').textContent = `XP: ${p.xp} / ${p.xpToNext}`;
+
+  // Enemy
+  const enemyBox = document.getElementById('enemy-box');
+  enemyBox.className = 'combatant enemy-box' + (e.isBoss ? ' boss' : '');
+  document.getElementById('enemy-name').textContent = e.name;
+  document.getElementById('enemy-sprite').textContent = e.sprite;
+  document.getElementById('enemy-hp-text').textContent = `${e.hp} / ${e.maxHp}`;
+  document.getElementById('enemy-hp-bar').style.width = (e.hp / e.maxHp * 100) + '%';
+  document.getElementById('enemy-info').textContent = `ATK: ${e.atk}`;
+}
+
+// ===========================
+// QUESTIONS
+// ===========================
+function askQuestion() {
+  // Pick a question (cycle through shuffled list)
+  if (game.dungeonQuestions.length === 0) {
+    game.dungeonQuestions = shuffle([...QUESTIONS[game.currentDungeon.id]]);
+  }
+  const q = game.dungeonQuestions.pop();
+  game.currentQuestion = q;
+
+  document.getElementById('question-text').textContent = q.q;
+  const container = document.getElementById('options-container');
+  container.innerHTML = '';
+
+  q.o.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt;
+    btn.onclick = () => answer(i);
+    container.appendChild(btn);
+  });
+
+  document.getElementById('explanation').classList.remove('visible');
+  document.getElementById('continue-btn').classList.remove('visible');
+}
+
+// ===========================
+// ANSWER
+// ===========================
+function answer(index) {
+  const q = game.currentQuestion;
+  const buttons = document.querySelectorAll('.option-btn');
+  const correct = index === q.a;
+
+  // Disable all buttons
+  buttons.forEach(b => b.disabled = true);
+
+  // Highlight correct/wrong
+  buttons[q.a].classList.add('correct');
+  if (!correct) buttons[index].classList.add('wrong');
+
+  // Show explanation
+  const expEl = document.getElementById('explanation');
+  expEl.innerHTML = `<strong>${correct ? '✓ Правильно!' : '✗ Неправильно!'}</strong><br><br>${q.e}`;
+  expEl.classList.add('visible');
+
+  if (correct) {
+    // Player attacks enemy
+    game.totalCorrect++;
+    const dmg = game.player.atk + Math.floor(Math.random() * 10);
+    game.currentEnemy.hp = Math.max(0, game.currentEnemy.hp - dmg);
+
+    showDamageFloat('enemy-box', `-${dmg}`, 'hit');
+    document.getElementById('player-box').classList.add('attack-right');
+    setTimeout(() => document.getElementById('player-box').classList.remove('attack-right'), 400);
+  } else {
+    // Enemy attacks player
+    game.totalWrong++;
+    const dmg = game.currentEnemy.atk + Math.floor(Math.random() * 5);
+    game.player.hp = Math.max(0, game.player.hp - dmg);
+
+    showDamageFloat('player-box', `-${dmg}`, 'miss');
+    document.getElementById('enemy-box').classList.add('attack-left');
+    document.getElementById('player-box').classList.add('shake');
+    setTimeout(() => {
+      document.getElementById('enemy-box').classList.remove('attack-left');
+      document.getElementById('player-box').classList.remove('shake');
+    }, 400);
+  }
+
+  updateBattleUI();
+
+  // Show continue
+  document.getElementById('continue-btn').classList.add('visible');
+}
+
+// ===========================
+// NEXT STEP
+// ===========================
+function nextStep() {
+  const p = game.player;
+  const e = game.currentEnemy;
+
+  // Player dead?
+  if (p.hp <= 0) {
+    showDefeat();
+    return;
+  }
+
+  // Enemy dead?
+  if (e.hp <= 0) {
+    const xpGain = e.isBoss ? 50 + game.player.level * 15 : 20 + game.player.level * 5;
+    const goldGain = e.isBoss ? 30 + Math.floor(Math.random() * 20) : 10 + Math.floor(Math.random() * 10);
+
+    p.xp += xpGain;
+    p.gold += goldGain;
+
+    // Level up check
+    if (p.xp >= p.xpToNext) {
+      p.xp -= p.xpToNext;
+      p.level++;
+      p.maxHp += 15;
+      p.hp = p.maxHp;
+      p.atk += 5;
+      p.xpToNext = Math.floor(p.xpToNext * 1.4);
+      showLevelUp();
+    }
+
+    if (e.isBoss) {
+      // Dungeon cleared!
+      if (!game.cleared.includes(game.currentDungeon.id)) {
+        game.cleared.push(game.currentDungeon.id);
+      }
+      saveGame();
+
+      // All dungeons cleared?
+      if (game.cleared.length === DUNGEONS.length) {
+        showGameComplete();
+      } else {
+        showVictory();
+      }
+      return;
+    }
+
+    // Next enemy
+    game.currentEnemyIndex++;
+    saveGame();
+    spawnEnemy();
+    return;
+  }
+
+  // Both alive — next question
+  askQuestion();
+}
+
+// ===========================
+// DAMAGE FLOAT
+// ===========================
+function showDamageFloat(targetId, text, type) {
+  const target = document.getElementById(targetId);
+  const float = document.createElement('div');
+  float.className = `damage-float ${type}`;
+  float.textContent = text;
+  float.style.left = '50%';
+  float.style.top = '30%';
+  target.appendChild(float);
+  setTimeout(() => float.remove(), 1200);
+}
+
+// ===========================
+// LEVEL UP
+// ===========================
+function showLevelUp() {
+  const p = game.player;
+  document.getElementById('levelup-text').innerHTML =
+    `Уровень <span>${p.level}</span>!<br>` +
+    `HP: <span>${p.maxHp}</span> | ATK: <span>${p.atk}</span>`;
+  document.getElementById('levelup-overlay').classList.add('visible');
+}
+
+function closeLevelUp() {
+  document.getElementById('levelup-overlay').classList.remove('visible');
+}
+
+// ===========================
+// VICTORY / DEFEAT
+// ===========================
+function showVictory() {
+  showScreen('victory-screen');
+  document.getElementById('victory-title').textContent = `${game.currentDungeon.icon} ${game.currentDungeon.name} — ПРОЙДЕНО!`;
+  document.getElementById('victory-stats').innerHTML =
+    `Уровень: <span>${game.player.level}</span><br>` +
+    `HP: <span>${game.player.hp} / ${game.player.maxHp}</span><br>` +
+    `Золото: <span>${game.player.gold}</span><br>` +
+    `Правильных ответов: <span>${game.totalCorrect}</span><br>` +
+    `Ошибок: <span>${game.totalWrong}</span>`;
+}
+
+function showDefeat() {
+  showScreen('defeat-screen');
+  document.getElementById('defeat-stats').innerHTML =
+    `Враг: <span>${game.currentEnemy.name}</span><br>` +
+    `Подземелье: <span>${game.currentDungeon.name}</span><br><br>` +
+    `Не сдавайся! Повтори материал и попробуй снова.`;
+  // Restore some HP for retry
+  game.player.hp = Math.floor(game.player.maxHp * 0.7);
+  saveGame();
+}
+
+function retryDungeon() {
+  enterDungeon(game.currentDungeon.id);
+}
+
+function showGameComplete() {
+  showScreen('gameover-screen');
+  document.getElementById('final-stats').innerHTML =
+    `Уровень: <span>${game.player.level}</span><br>` +
+    `Золото: <span>${game.player.gold}</span><br>` +
+    `Правильных ответов: <span>${game.totalCorrect}</span><br>` +
+    `Ошибок: <span>${game.totalWrong}</span><br>` +
+    `Точность: <span>${Math.round(game.totalCorrect / (game.totalCorrect + game.totalWrong) * 100)}%</span>`;
+}
+
+// ===========================
+// UTILS
+// ===========================
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+</script>
+</body>
+</html>
